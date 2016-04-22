@@ -6,74 +6,84 @@ READ_INT=		5
 MIN_BSIZE=		2
 MAX_BSIZE=		10
 MAX_TILES=		MAX_BSIZE*MAX_BSIZE
-IN_BUF_SIZE=	MAX_TILES+1			# buffer needs 1 byte for size input
+IN_BUF_SIZE=	(MAX_TILES+1)*4			# buffer needs room for 32-bit size value
 
 	.data
 	.align 2
 
-pow10:
-	.word 1, 10, 100, 1000, 10000
-	
-print0:
-	.asciiz "Enter board size to check: "
-print1:
-	.asciiz "Possible valid rows for board size "
-print2:
-	.asciiz ": "
+# Error messages
+err_badsize:
+	.asciiz "Invalid board size, 3-In-A-Row terminating"
+	.asciiz "Illegal input value, 3-In-A-Row terminating"
+
+# Formatting
+banner:
+	.ascii "******************\n"
+	.ascii "**  3-In-A-Row  **\n"
+	.asciiz "******************\n\n"
+initpzl:
+	.asciiz "Initial Puzzle\n\n"
+finalpzl:
+	.asciiz "Final Puzzle\n\n"
+corner:
+	.asciiz "+"
+top:
+	.asciiz "-"
+side:
+	.asciiz "|"
+unknown:
+	.asciiz "."
+white:
+	.asciiz " "
+black:
+	.asciiz "#"
 newline:
 	.asciiz "\n"
 	
-getsize_buf:
-	.space 4
+in_buf:
+	.space IN_BUF_SIZE
 	
 	.text
 	
-	# extern ref
+	# External references
+	# ===================
+	
+	# validrows.asm
 	.globl valid_rows
 	
-	# extern def
+	# io.asm
+	.globl print_int
+	.globl print_str
+	.globl read_int
+	
+	# External definitions
+	# ====================
 	.globl main
 	
 main:
-	addi	$sp, $sp, -8
+	addi	$sp, $sp, -36
+	sw		$s7, 32($sp)
+	sw		$s6, 28($sp)
+	sw		$s5, 24($sp)
+	sw		$s4, 20($sp)
+	sw		$s3, 16($sp)
+	sw		$s2, 12($sp)
+	sw		$s1, 8($sp)
 	sw		$s0, 4($sp)
 	sw		$ra, 0($sp)
 	
-	la		$a0, print0
-	li		$v0, PRINT_STRING
-	syscall
+	la		$a0, banner
+	jal		print_str
 	
-	li		$v0, READ_INT
-	syscall
-	move	$s0, $v0
-
-	la		$a0, print1
-	li		$v0, PRINT_STRING
-	syscall
-	
-	move	$a0, $s0
-	li		$v0, PRINT_INT
-	syscall
-	
-	la		$a0, print2
-	li		$v0, PRINT_STRING
-	syscall
-	
-	move	$a0, $s0
-	jal		valid_rows
-	
-	lh		$a0, 0($v0)
-	li		$v0, PRINT_INT
-	syscall
-	
-	la		$a0, newline
-	li		$v0, PRINT_STRING
-	syscall
-	
-	
-	
-	lw		$ra, 0($sp)
+	lw		$s7, 32($sp)
+	lw		$s6, 28($sp)
+	lw		$s5, 24($sp)
+	lw		$s4, 20($sp)
+	lw		$s3, 16($sp)
+	lw		$s2, 12($sp)
+	lw		$s1, 8($sp)
 	lw		$s0, 4($sp)
-	addi	$sp, $sp, 8
+	lw		$ra, 0($sp)
+	addi	$sp, $sp, 36
 	
 	jr		$ra

@@ -10,9 +10,13 @@ FCLOSE=			16
 O_RDONLY=		0
 O_WRONLY=		1
 O_RDWR=			2
-
+	
 	.text
 
+	.globl print_int
+	.globl print_str
+	.globl read_int
+	
 print_int:
 	li		$v0, PRINT_INT
 	syscall
