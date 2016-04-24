@@ -6,15 +6,16 @@ READ_INT=		5
 MIN_BSIZE=		2
 MAX_BSIZE=		10
 MAX_TILES=		MAX_BSIZE*MAX_BSIZE
-IN_BUF_SIZE=	(MAX_TILES+1)*4			# buffer needs room for 32-bit size value
+BBUF_SIZE=		MAX_TILES*4			# board buffer
 
 	.data
 	.align 2
 
 # Error messages
 err_badsize:
-	.asciiz "Invalid board size, 3-In-A-Row terminating"
-	.asciiz "Illegal input value, 3-In-A-Row terminating"
+	.asciiz "Invalid board size, 3-In-A-Row terminating\n"
+err_badinput:
+	.asciiz "Illegal input value, 3-In-A-Row terminating\n"
 
 # Formatting
 banner:
@@ -39,11 +40,17 @@ black:
 	.asciiz "#"
 newline:
 	.asciiz "\n"
+
+	.align 2
 	
-in_buf:
-	.space IN_BUF_SIZE
+# Input buffer
+bsize:
+	.space 4
+bbuf:
+	.space BBUF_SIZE
 	
 	.text
+	.align 2
 	
 	# External references
 	# ===================
@@ -72,7 +79,34 @@ main:
 	sw		$s0, 4($sp)
 	sw		$ra, 0($sp)
 	
-	la		$a0, banner
+	jal		read_int				# read board size
+	la		$s0, bsize
+	sw		$v0, 0($s0)				# store board size
+	
+	slti	$t0, $v0, 11			# check valid size: 2 <= x <= 10
+	slti	$t1, $v0, 2
+	nor		$t1, $t1, $zero
+	and		$t2, $t0, $t1			# 1 if in valid range
+	li		$t3, 1					# ensure size is even too
+	and		$t4, $v0, $t3			# size & 1 = 1 if size is odd
+	xor		$t4, $t4, $t3
+	and		$t2, $t2, $t4			# 1 if in valid range and even
+	beq		$t2, $zero, bad_board
+	
+	la		$s1, bbuf 
+readb_loop:
+	
+	
+	la		$a0, banner		# print banner
+	jal		print_str	
+	
+	la		$a0, initpzl
+	jal		print_str
+	
+	lw		$a0, 0($s0)
+	jal		print_int
+	
+	la		$a0, newline
 	jal		print_str
 	
 	lw		$s7, 32($sp)
@@ -86,4 +120,15 @@ main:
 	lw		$ra, 0($sp)
 	addi	$sp, $sp, 36
 	
+	j		main_done
+	
+bad_board:
+	la		$a0, err_badsize
+	jal		print_str
+	j		main_done
+bad_input:
+	la		$a0, err_badinput
+	jal		print_str
+	
+main_done:
 	jr		$ra

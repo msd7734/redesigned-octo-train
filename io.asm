@@ -12,7 +12,8 @@ O_WRONLY=		1
 O_RDWR=			2
 	
 	.text
-
+	.align 2
+	
 	.globl print_int
 	.globl print_str
 	.globl read_int
