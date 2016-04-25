@@ -80,8 +80,7 @@ main:
 	sw		$ra, 0($sp)
 	
 	jal		read_int				# read board size
-	la		$s0, bsize
-	sw		$v0, 0($s0)				# store board size
+	move	$s0, $v0				# s0 = board size
 	
 	slti	$t0, $v0, 11			# check valid size: 2 <= x <= 10
 	slti	$t1, $v0, 2
@@ -93,9 +92,28 @@ main:
 	and		$t2, $t2, $t4			# 1 if in valid range and even
 	beq		$t2, $zero, bad_board
 	
-	la		$s1, bbuf 
+	la		$s1, bbuf				# s1 = board[MAX_TILES]
+	li		$t0, 0					# i as t0 = 0
+	mul		$s2, $s0, $s0			# tiles as s2 = bsize*bsize
 readb_loop:
+	slt		$t1, $t0, $s2			# if !(i < tiles) then loop end
+	beq		$t1, $zero, readb_end
 	
+	jal		read_int				# v0 = read_int()
+	slt		$t3, $v0, $zero			# 0 <= v0 <= 2
+	nor		$t3, $t3, $zero
+	slt		$t4, $v0, 3
+	and		$t3, $t3, $t4
+	beq		$t3, $zero, bad_input
+
+	mul		$t2, $t0, 4				# offset as t2 = i*4
+	add		$t3, $s1, $t2			# t3 = board+offset
+	sw		$v0, 0($t3)				# board[i] = v0
+
+	addi	$t0, $t0, 1				# i++
+	j		readb_loop
+
+readb_end:
 	
 	la		$a0, banner		# print banner
 	jal		print_str	
@@ -103,7 +121,7 @@ readb_loop:
 	la		$a0, initpzl
 	jal		print_str
 	
-	lw		$a0, 0($s0)
+	move	$a0, $s2
 	jal		print_int
 	
 	la		$a0, newline
