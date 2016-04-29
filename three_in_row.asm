@@ -96,7 +96,7 @@ main:
 	
 	la		$s1, bbuf				# s1 = board[MAX_TILES]
 	li		$t0, 0					# i as t0 = 0
-	mul		$s2, $s0, $s0			# tiles as s2 = bsize*bsize
+	mul		$s2, $s0, $s0			# s2 as tiles = bsize*bsize
 readb_loop:
 	slt		$t1, $t0, $s2			# if !(i < tiles) then loop end
 	beq		$t1, $zero, readb_end
@@ -115,10 +115,23 @@ readb_loop:
 	addi	$t0, $t0, 1				# i++
 	j		readb_loop
 	
-	# pad rest of input buffer with sentinal value
-	
-
 readb_end:
+	# pad rest of input buffer with sentinal value
+	li		$t9, SENTINAL			# t9 = 0xBAD
+	
+	# reusing t0 (i) from above
+padb_loop:
+	slti	$t2, $t0, MAX_TILES		# if !(i < MAX_TILES) then loop end
+	beq		$t2, $zero, padb_end
+	
+	mul		$t2, $t0, 4				# offset as t2 = i*4
+	add		$t3, $s1, $t2
+	sw		$t9, 0($t3)				# board[i] = SENTINAL
+	
+	addi	$t0, $t0, 1
+	j		padb_loop
+	
+padb_end:
 	
 	la		$a0, banner		# print banner
 	jal		print_str	
