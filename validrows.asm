@@ -125,7 +125,7 @@ valid_rows:
 	la		$t0, rows_tbl			# t0 = rows_tbl&
 	addi	$t1, $a0, -2			# offset = (length-2)*4
 	mul		$t1, $t1, 4
-	add		$t2, $t0, $t1			# return (rows_tbl+offset)*
+	add		$t2, $t0, $t1			# return (rows_tbl& + offset)
 	lw		$v0, 0($t2)
 	j		done
 bad_length:

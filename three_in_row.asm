@@ -8,6 +8,8 @@ MAX_BSIZE=		10
 MAX_TILES=		MAX_BSIZE*MAX_BSIZE
 BBUF_SIZE=		MAX_TILES*4			# board buffer
 
+SENTINAL=		0xBAD				# 2989, 0b101110101101
+
 	.data
 	.align 2
 
@@ -112,6 +114,9 @@ readb_loop:
 
 	addi	$t0, $t0, 1				# i++
 	j		readb_loop
+	
+	# pad rest of input buffer with sentinal value
+	
 
 readb_end:
 	
@@ -127,17 +132,6 @@ readb_end:
 	la		$a0, newline
 	jal		print_str
 	
-	lw		$s7, 32($sp)
-	lw		$s6, 28($sp)
-	lw		$s5, 24($sp)
-	lw		$s4, 20($sp)
-	lw		$s3, 16($sp)
-	lw		$s2, 12($sp)
-	lw		$s1, 8($sp)
-	lw		$s0, 4($sp)
-	lw		$ra, 0($sp)
-	addi	$sp, $sp, 36
-	
 	j		main_done
 	
 bad_board:
@@ -149,4 +143,14 @@ bad_input:
 	jal		print_str
 	
 main_done:
+	lw		$s7, 32($sp)
+	lw		$s6, 28($sp)
+	lw		$s5, 24($sp)
+	lw		$s4, 20($sp)
+	lw		$s3, 16($sp)
+	lw		$s2, 12($sp)
+	lw		$s1, 8($sp)
+	lw		$s0, 4($sp)
+	lw		$ra, 0($sp)
+	addi	$sp, $sp, 36
 	jr		$ra
