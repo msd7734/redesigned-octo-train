@@ -102,7 +102,7 @@ readb_loop:
 	jal		read_int				# v0 = read_int()
 	slt		$t3, $v0, $zero			# 0 <= v0 <= 2
 	nor		$t3, $t3, $zero
-	slt		$t4, $v0, 3
+	slti	$t4, $v0, 3
 	and		$t3, $t3, $t4
 	beq		$t3, $zero, bad_input
 
