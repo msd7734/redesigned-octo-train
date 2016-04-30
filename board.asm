@@ -82,6 +82,7 @@ filtered_rows:
 	# ====================
 	.globl b_from_template
 	.globl get_black_mask
+	.globl get_white_mask
 	
 #############################
 # b_from_template
@@ -175,7 +176,7 @@ gfr_done:
 #  a1 - Pointer to a template row (a series of words)
 # Returns:
 #  v0 - An integer mask.
-#	If row & black_mask = black_mask, row is valid for template.
+#	If row & black_mask = black_mask, row is valid for template (for black).
 #############################
 get_black_mask:
 	li	$v0, 0
@@ -206,4 +207,42 @@ gblm_loop_end:
 gblm_done:
 	jr	$ra
 	
+#############################
+# get_white_mask
+# Generate a bitmask that can be OR'd with to validate row vs. a template row.
+# Args:
+#  a0 - Length of a board row
+#  a1 - Pointer to a template row (a series of words)
+# Returns:
+#  v0 - An integer mask.
+#	If row | white_mask = white_mask, row is valid for template (for white).
+#############################
 get_white_mask:
+	li	$v0, 0
+	la	$t9, hflags
+	move	$t0, $a0
+gwhm_loop:
+	beq	$t0, $zero, gwhm_done
+	
+	addi	$t1, $t0, -1		# check the (i-1)th bit
+	mul	$t1, $t1, 2		# t2 as flag = ptr hflags + (i-1)*2
+	add	$t2, $t9, $t1
+	lh	$t2, 0($t2)
+	
+	sub	$t3, $a0, $t0	# t3 as template_part = template[(len-i)*4]
+	mul	$t3, $t3, 4
+	add	$t3, $a1, $t3
+	lw	$t3, 0($t3)
+	
+	# if the template_part is 1, treat bit as 0 in mask (white)
+	# else, treat as 1 (black)
+	
+	addi	$t4, $t3, -1
+	beq	$t4, $zero, gblm_loop_end
+	or	$v0, $v0, $t2
+gwhm_loop_end:
+	addi	$t0, $t0, -1
+	j	gwhm_loop
+gwhm_done:
+	jr	$ra
+	

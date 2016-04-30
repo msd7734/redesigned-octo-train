@@ -60,6 +60,7 @@ bbuf:
 	
 	# board.asm
 	.globl get_black_mask
+	.globl get_white_mask
 	
 	# External definitions
 	# ====================
