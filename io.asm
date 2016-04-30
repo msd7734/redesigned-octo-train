@@ -51,6 +51,8 @@ newline:
 	.text
 	.align 2
 	
+	.globl newline
+	
 	.globl print_int
 	.globl print_str
 	.globl read_int
@@ -59,6 +61,7 @@ newline:
 	
 	.globl print_template_row
 	.globl print_board_hedge
+	.globl print_template
 	
 #############################
 # print_bad_data_warn
@@ -87,7 +90,7 @@ pbdw_done:
 	jal		print_str
 	
 	lw		$ra, 0($sp)
-	addi	$sp, $sp 4
+	addi	$sp, $sp, 4
 	jr		$ra
 	
 print_int:
@@ -146,25 +149,67 @@ ptr_loop_break:
 	
 ptr_done:	
 	lw		$ra, 0($sp)
-	addi	$sp, $sp 4
+	addi	$sp, $sp, 4
 	jr		$ra
 	
 #############################
 # print_template
 # Print the string representation of a board template (the "initial puzzle")
 # Args:
-#  a0 - Length of a row
+#  a0 - Length of a row (and a column)
 #  a1 - Ptr to board template data structure
 #############################
 print_template:
-	addi	$sp, $sp, -4
+	addi	$sp, $sp, -16
+	sw		$s2, 12($sp)
+	sw		$s1, 8($sp)
+	sw		$s0, 4($sp)
 	sw		$ra, 0($sp)
-
 	
+	move	$s0, $a0
+	move	$s1, $a1
+	
+	jal		print_board_hedge
+	
+	la		$a0, newline
+	jal		print_str
+	
+	li		$s2, 0					# s2 as i = 0
+pt_loop:
+	slt		$t1, $s2, $s0
+	beq		$t1, $zero, pt_done
+	
+	la		$a0, side
+	jal		print_str
+	
+	mul		$t1, $s2, $s0			# t1 as row = i * length
+	mul		$t1, $t1, 4				# t1 as offset = row * 4
+	add		$a1, $t1, $s1			# board + offset
+	move	$a0, $s0
+	jal		print_template_row
+	
+	la		$a0, side
+	jal		print_str
+	
+	la		$a0, newline
+	jal		print_str
+	
+	addi	$s2, $s2, 1
+	j		pt_loop
+
 
 pt_done:
+	move	$a0, $s0
+	jal		print_board_hedge
+
+	la		$a0, newline
+	jal		print_str
+	
+	sw		$s2, 12($sp)
+	lw		$s1, 8($sp)
+	lw		$s0, 4($sp)
 	lw		$ra, 0($sp)
-	addi	$sp, $sp 4
+	addi	$sp, $sp, 16
 	jr		$ra
 	
 print_bstate_row:
@@ -201,5 +246,5 @@ pbh_done:
 	jal		print_str
 	
 	lw		$ra, 0($sp)
-	addi	$sp, $sp 4
+	addi	$sp, $sp, 4
 	jr		$ra

@@ -28,8 +28,6 @@ initpzl:
 	.asciiz "Initial Puzzle\n\n"
 finalpzl:
 	.asciiz "Final Puzzle\n\n"
-newline:
-	.asciiz "\n"
 
 	.align 2
 	
@@ -49,12 +47,15 @@ bbuf:
 	.globl valid_rows
 	
 	# io.asm
+	.globl newline			# I hate this.
+	
 	.globl print_int
 	.globl print_str
 	.globl read_int
 	.globl print_bad_data_warn
 	.globl print_template_row
 	.globl print_board_hedge
+	.globl print_template
 	
 	# External definitions
 	# ====================
@@ -130,7 +131,22 @@ padb_end:
 	la		$a0, initpzl
 	jal		print_str
 	
+	move	$a0, $s0
+	move	$a1, $s1
+	jal		print_template
+	
 	la		$a0, newline
+	jal		print_str
+	
+	la		$a0, finalpzl
+	jal		print_str
+	
+	move	$a0, $s0
+	move	$a1, $s1
+	jal		print_template
+	
+	la		$a0, newline
+	jal		print_str
 	jal		print_str
 	
 	j		main_done
