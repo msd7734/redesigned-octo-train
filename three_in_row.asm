@@ -58,6 +58,9 @@ bbuf:
 	.globl print_template
 	.globl print_bstate_row
 	
+	# board.asm
+	.globl get_black_mask
+	
 	# External definitions
 	# ====================
 	.globl main
@@ -113,16 +116,16 @@ readb_loop:
 	
 readb_end:
 	# pad rest of input buffer with SENTINEL value
-	li		$t9, SENTINEL		# t9 = 0xBAD
+	li	$t9, SENTINEL		# t9 = 0xBAD
 	
 	# reusing t0 (i) from above
 padb_loop:
-	slti	$t2, $t0, MAX_TILES		# if !(i < MAX_TILES) then loop end
+	slti	$t2, $t0, MAX_TILES	# if !(i < MAX_TILES) then loop end
 	beq	$t2, $zero, padb_end
 	
-	mul	$t2, $t0, 4			# offset as t2 = i*4
+	mul	$t2, $t0, 4		# offset as t2 = i*4
 	add	$t3, $s1, $t2
-	sw	$t9, 0($t3)			# board[i] = SENTINEL
+	sw	$t9, 0($t3)		# board[i] = SENTINEL
 	
 	addi	$t0, $t0, 1
 	j	padb_loop
