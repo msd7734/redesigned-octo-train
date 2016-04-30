@@ -11,11 +11,38 @@ O_RDONLY=		0
 O_WRONLY=		1
 O_RDWR=			2
 
+# SENTINEL
+SENTINEL=		0xBAD				# 2989, 0b101110101101
+
 	.data
 	.align 2
 	
+	# formatting
+unknown:
+	.asciiz "."
+white:
+	.asciiz " "
+black:
+	.asciiz "#"
+corner:
+	.asciiz "+"
+top:
+	.asciiz "-"
+side:
+	.asciiz "|"
+	
+	.align 2
+	
+	# format symbol tbl
+symbols:
+	.word unknown
+	.word white
+	.word black
+	
+	
+	# messages
 bad_data_msg:
-	.asciiz "!! WARNING: SENTINAL READ AT ADDR "
+	.asciiz "!! WARNING: SENTINEL READ AT ADDR "
 bad_data_noaddr:
 	.asciiz "[No address given]"
 newline:
@@ -27,11 +54,14 @@ newline:
 	.globl print_int
 	.globl print_str
 	.globl read_int
+	
 	.globl print_bad_data_warn
+	
+	.globl print_template_row
 	
 #############################
 # print_bad_data_warn
-# Print warning that a sentinal indicating bad data has been read.
+# Print warning that a SENTINEL indicating bad data has been read.
 # Note: Feel free to put a break point here for even more useful debug info.
 # Args:
 #  a0 - Address at which the value occured. Either the PC or the mem address,
@@ -46,7 +76,7 @@ print_bad_data_warn:
 	jal		print_str
 	beq		$t0, $zero, pbdw_noaddr
 	move	$a0, $t0
-	jal		print_str
+	jal		print_int
 	j		pbdw_done
 pbdw_noaddr:
 	la		$a0, bad_data_noaddr
@@ -82,7 +112,40 @@ read_int:
 #  a1 - Ptr to row data words
 #############################
 print_template_row:
+	addi	$sp, $sp, -4
+	sw		$ra, 0($sp)
 	
+	li		$t0, 0			# t0 as i = 0
+	move	$t1, $a0		# t1 as len = a0
+	move	$t2, $a1		# t2 as data* = a1
+	la		$t3, symbols	# t3 as symtbl* = symbols&
+	
+ptr_loop:
+	slt		$t4, $t0, $t1			# if !(i < len), done
+	beq		$t4, $zero, ptr_done
+	
+	mul		$t4, $t0, 4		# t4 as offset = i*4
+	add		$t4, $t4, $t2	# t4 = data+offset
+	lw		$t5, 0($t4)		# t5 = data[i]
+	
+	li		$t6, SENTINEL				# reading bad data?
+	beq		$t5, $t6, ptr_loop_break
+	
+	mul		$t6, $t5, 4		# t6 as offset = t5 * 4
+	add		$t6, $t3, $t6	# t6 = symtbl+offset
+	lw		$a0, 0($t6)		# get print symbol from symtbl (a0 = symtbl[data])
+	jal		print_str
+	
+	addi	$t0, $t0, 1
+	j		ptr_loop
+	
+ptr_loop_break:
+	move	$a0, $t4					# print_bad_data_warn(data&)
+	jal		print_bad_data_warn
+	
+ptr_done:	
+	lw		$ra, 0($sp)
+	addi	$sp, $sp 4
 	jr		$ra
 	
 print_template:

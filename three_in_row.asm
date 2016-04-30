@@ -8,7 +8,7 @@ MAX_BSIZE=		10
 MAX_TILES=		MAX_BSIZE*MAX_BSIZE
 BBUF_SIZE=		MAX_TILES*4			# board buffer
 
-SENTINAL=		0xBAD				# 2989, 0b101110101101
+SENTINEL=		0xBAD				# 2989, 0b101110101101
 
 	.data
 	.align 2
@@ -19,7 +19,7 @@ err_badsize:
 err_badinput:
 	.asciiz "Illegal input value, 3-In-A-Row terminating\n"
 
-# Formatting
+# Message output
 banner:
 	.ascii "******************\n"
 	.ascii "**  3-In-A-Row  **\n"
@@ -28,18 +28,6 @@ initpzl:
 	.asciiz "Initial Puzzle\n\n"
 finalpzl:
 	.asciiz "Final Puzzle\n\n"
-corner:
-	.asciiz "+"
-top:
-	.asciiz "-"
-side:
-	.asciiz "|"
-unknown:
-	.asciiz "."
-white:
-	.asciiz " "
-black:
-	.asciiz "#"
 newline:
 	.asciiz "\n"
 
@@ -64,6 +52,8 @@ bbuf:
 	.globl print_int
 	.globl print_str
 	.globl read_int
+	.globl print_bad_data_warn
+	.globl print_template_row
 	
 	# External definitions
 	# ====================
@@ -116,8 +106,8 @@ readb_loop:
 	j		readb_loop
 	
 readb_end:
-	# pad rest of input buffer with sentinal value
-	li		$t9, SENTINAL			# t9 = 0xBAD
+	# pad rest of input buffer with SENTINEL value
+	li		$t9, SENTINEL			# t9 = 0xBAD
 	
 	# reusing t0 (i) from above
 padb_loop:
@@ -126,7 +116,7 @@ padb_loop:
 	
 	mul		$t2, $t0, 4				# offset as t2 = i*4
 	add		$t3, $s1, $t2
-	sw		$t9, 0($t3)				# board[i] = SENTINAL
+	sw		$t9, 0($t3)				# board[i] = SENTINEL
 	
 	addi	$t0, $t0, 1
 	j		padb_loop
@@ -138,9 +128,6 @@ padb_end:
 	
 	la		$a0, initpzl
 	jal		print_str
-	
-	move	$a0, $s2
-	jal		print_int
 	
 	la		$a0, newline
 	jal		print_str
