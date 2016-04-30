@@ -58,6 +58,7 @@ newline:
 	.globl print_bad_data_warn
 	
 	.globl print_template_row
+	.globl print_board_hedge
 	
 #############################
 # print_bad_data_warn
@@ -106,7 +107,7 @@ read_int:
 
 #############################
 # print_template_row
-# Print the string representation of a board template (the "initial puzzle").
+# Print the string representation of a board template row.
 # Args:
 #  a0 - Length of the row
 #  a1 - Ptr to row data words
@@ -148,10 +149,57 @@ ptr_done:
 	addi	$sp, $sp 4
 	jr		$ra
 	
+#############################
+# print_template
+# Print the string representation of a board template (the "initial puzzle")
+# Args:
+#  a0 - Length of a row
+#  a1 - Ptr to board template data structure
+#############################
 print_template:
+	addi	$sp, $sp, -4
+	sw		$ra, 0($sp)
+
 	
+
+pt_done:
+	lw		$ra, 0($sp)
+	addi	$sp, $sp 4
 	jr		$ra
 	
 print_bstate_row:
 	
+	jr		$ra
+	
+#############################
+# print_board_hedge
+# Print the horizontal edge (incl corners) of a board of a given length.
+# Args:
+#  a0 - Length of a row
+#############################
+print_board_hedge:
+	addi	$sp, $sp, -4
+	sw		$ra, 0($sp)
+
+	move	$t1, $a0
+	
+	la		$a0, corner
+	jal		print_str
+	
+	li		$t0, 0
+pbh_loop:
+	slt		$t2, $t0, $t1
+	beq		$t2, $zero, pbh_done
+	la		$a0, top
+	jal		print_str
+	
+	addi	$t0, $t0, 1
+	j		pbh_loop
+	
+pbh_done:
+	la		$a0, corner
+	jal		print_str
+	
+	lw		$ra, 0($sp)
+	addi	$sp, $sp 4
 	jr		$ra

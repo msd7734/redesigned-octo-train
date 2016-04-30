@@ -54,6 +54,7 @@ bbuf:
 	.globl read_int
 	.globl print_bad_data_warn
 	.globl print_template_row
+	.globl print_board_hedge
 	
 	# External definitions
 	# ====================
