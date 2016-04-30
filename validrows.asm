@@ -112,23 +112,23 @@ row_bsize10:
 # 		}
 #############################
 valid_rows:
-	slti	$t0, $a0, 11			# check valid size: 2 <= x <= 10
+	slti	$t0, $a0, 11		# check valid size: 2 <= x <= 10
 	slti	$t1, $a0, 2
-	nor		$t1, $t1, $zero
-	and		$t2, $t0, $t1
-	li		$t3, 1					# ensure size is even too
-	and		$t4, $a0, $t3			# size & 1 = 1 if size is odd
-	xor		$t4, $t4, $t3
-	and		$t2, $t2, $t4
-	beq		$t2, $zero, bad_length
+	nor	$t1, $t1, $zero
+	and	$t2, $t0, $t1
+	li	$t3, 1			# ensure size is even too
+	and	$t4, $a0, $t3		# size & 1 = 1 if size is odd
+	xor	$t4, $t4, $t3
+	and	$t2, $t2, $t4
+	beq	$t2, $zero, bad_length
 	
-	la		$t0, rows_tbl			# t0 = rows_tbl&
-	addi	$t1, $a0, -2			# offset = (length-2)*4
-	mul		$t1, $t1, 4
-	add		$t2, $t0, $t1			# return (rows_tbl& + offset)
-	lw		$v0, 0($t2)
-	j		done
+	la	$t0, rows_tbl		# t0 = rows_tbl&
+	addi	$t1, $a0, -2		# offset = (length-2)*4
+	mul	$t1, $t1, 4
+	add	$t2, $t0, $t1		# return (rows_tbl& + offset)
+	lw	$v0, 0($t2)
+	j	done
 bad_length:
-	la		$v0, size_err
+	la	$v0, size_err
 done:
-	jr		$ra
+	jr	$ra

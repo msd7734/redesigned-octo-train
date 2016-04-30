@@ -73,40 +73,40 @@ newline:
 #############################
 print_bad_data_warn:
 	addi	$sp, $sp, -4
-	sw		$ra, 0($sp)
+	sw	$ra, 0($sp)
 
 	move	$t0, $a0
-	la		$a0, bad_data_msg
-	jal		print_str
-	beq		$t0, $zero, pbdw_noaddr
+	la	$a0, bad_data_msg
+	jal	print_str
+	beq	$t0, $zero, pbdw_noaddr
 	move	$a0, $t0
-	jal		print_int
-	j		pbdw_done
+	jal	print_int
+	j	pbdw_done
 pbdw_noaddr:
-	la		$a0, bad_data_noaddr
-	jal		print_str
+	la	$a0, bad_data_noaddr
+	jal	print_str
 pbdw_done:
-	la		$a0, newline
-	jal		print_str
+	la	$a0, newline
+	jal	print_str
 	
-	lw		$ra, 0($sp)
+	lw	$ra, 0($sp)
 	addi	$sp, $sp, 4
-	jr		$ra
+	jr	$ra
 	
 print_int:
-	li		$v0, PRINT_INT
+	li	$v0, PRINT_INT
 	syscall
-	jr		$ra
+	jr	$ra
 
 print_str:
-	li		$v0, PRINT_STRING
+	li	$v0, PRINT_STRING
 	syscall
-	jr		$ra
+	jr	$ra
 	
 read_int:
-	li		$v0, READ_INT
+	li	$v0, READ_INT
 	syscall
-	jr		$ra
+	jr	$ra
 
 #############################
 # print_template_row
@@ -117,40 +117,40 @@ read_int:
 #############################
 print_template_row:
 	addi	$sp, $sp, -4
-	sw		$ra, 0($sp)
+	sw	$ra, 0($sp)
 	
-	li		$t0, 0			# t0 as i = 0
+	li	$t0, 0			# t0 as i = 0
 	move	$t1, $a0		# t1 as len = a0
 	move	$t2, $a1		# t2 as data* = a1
-	la		$t3, symbols	# t3 as symtbl* = symbols&
+	la	$t3, symbols		# t3 as symtbl* = symbols&
 	
 ptr_loop:
-	slt		$t4, $t0, $t1			# if !(i < len), done
-	beq		$t4, $zero, ptr_done
+	slt	$t4, $t0, $t1		# if !(i < len), done
+	beq	$t4, $zero, ptr_done
 	
-	mul		$t4, $t0, 4		# t4 as offset = i*4
-	add		$t4, $t4, $t2	# t4 = data+offset
-	lw		$t5, 0($t4)		# t5 = data[i]
+	mul	$t4, $t0, 4		# t4 as offset = i*4
+	add	$t4, $t4, $t2		# t4 = data+offset
+	lw	$t5, 0($t4)		# t5 = data[i]
 	
-	li		$t6, SENTINEL				# reading bad data?
-	beq		$t5, $t6, ptr_loop_break
+	li	$t6, SENTINEL		# reading bad data?
+	beq	$t5, $t6, ptr_loop_break
 	
-	mul		$t6, $t5, 4		# t6 as offset = t5 * 4
-	add		$t6, $t3, $t6	# t6 = symtbl+offset
-	lw		$a0, 0($t6)		# get print symbol from symtbl (a0 = symtbl[data])
-	jal		print_str
+	mul	$t6, $t5, 4		# t6 as offset = t5 * 4
+	add	$t6, $t3, $t6		# t6 = symtbl+offset
+	lw	$a0, 0($t6)		# get print symbol from symtbl (a0 = symtbl[data])
+	jal	print_str
 	
 	addi	$t0, $t0, 1
-	j		ptr_loop
+	j	ptr_loop
 	
 ptr_loop_break:
-	move	$a0, $t4					# print_bad_data_warn(data&)
-	jal		print_bad_data_warn
+	move	$a0, $t4		# print_bad_data_warn(data&)
+	jal	print_bad_data_warn
 	
 ptr_done:	
-	lw		$ra, 0($sp)
+	lw	$ra, 0($sp)
 	addi	$sp, $sp, 4
-	jr		$ra
+	jr	$ra
 	
 #############################
 # print_template
@@ -161,60 +161,60 @@ ptr_done:
 #############################
 print_template:
 	addi	$sp, $sp, -16
-	sw		$s2, 12($sp)
-	sw		$s1, 8($sp)
-	sw		$s0, 4($sp)
-	sw		$ra, 0($sp)
+	sw	$s2, 12($sp)
+	sw	$s1, 8($sp)
+	sw	$s0, 4($sp)
+	sw	$ra, 0($sp)
 	
 	move	$s0, $a0
 	move	$s1, $a1
 	
-	jal		print_board_hedge
+	jal	print_board_hedge
 	
-	la		$a0, newline
-	jal		print_str
+	la	$a0, newline
+	jal	print_str
 	
-	li		$s2, 0					# s2 as i = 0
+	li	$s2, 0			# s2 as i = 0
 pt_loop:
-	slt		$t1, $s2, $s0
-	beq		$t1, $zero, pt_done
+	slt	$t1, $s2, $s0
+	beq	$t1, $zero, pt_done
 	
-	la		$a0, side
-	jal		print_str
+	la	$a0, side
+	jal	print_str
 	
-	mul		$t1, $s2, $s0			# t1 as row = i * length
-	mul		$t1, $t1, 4				# t1 as offset = row * 4
-	add		$a1, $t1, $s1			# board + offset
+	mul	$t1, $s2, $s0		# t1 as row = i * length
+	mul	$t1, $t1, 4		# t1 as offset = row * 4
+	add	$a1, $t1, $s1		# board + offset
 	move	$a0, $s0
-	jal		print_template_row
+	jal	print_template_row
 	
-	la		$a0, side
-	jal		print_str
+	la	$a0, side
+	jal	print_str
 	
-	la		$a0, newline
-	jal		print_str
+	la	$a0, newline
+	jal	print_str
 	
 	addi	$s2, $s2, 1
-	j		pt_loop
+	j	pt_loop
 
 
 pt_done:
 	move	$a0, $s0
-	jal		print_board_hedge
+	jal	print_board_hedge
 
-	la		$a0, newline
-	jal		print_str
+	la	$a0, newline
+	jal	print_str
 	
-	sw		$s2, 12($sp)
-	lw		$s1, 8($sp)
-	lw		$s0, 4($sp)
-	lw		$ra, 0($sp)
+	sw	$s2, 12($sp)
+	lw	$s1, 8($sp)
+	lw	$s0, 4($sp)
+	lw	$ra, 0($sp)
 	addi	$sp, $sp, 16
-	jr		$ra
+	jr	$ra
 	
 print_bstate_row:
 	
-	jr		$ra
+	jr	$ra
 	
 #############################
 # print_board_hedge
@@ -224,27 +224,27 @@ print_bstate_row:
 #############################
 print_board_hedge:
 	addi	$sp, $sp, -4
-	sw		$ra, 0($sp)
+	sw	$ra, 0($sp)
 
 	move	$t1, $a0
 	
-	la		$a0, corner
-	jal		print_str
+	la	$a0, corner
+	jal	print_str
 	
-	li		$t0, 0
+	li	$t0, 0
 pbh_loop:
-	slt		$t2, $t0, $t1
-	beq		$t2, $zero, pbh_done
-	la		$a0, top
-	jal		print_str
+	slt	$t2, $t0, $t1
+	beq	$t2, $zero, pbh_done
+	la	$a0, top
+	jal	print_str
 	
 	addi	$t0, $t0, 1
-	j		pbh_loop
+	j	pbh_loop
 	
 pbh_done:
-	la		$a0, corner
-	jal		print_str
+	la	$a0, corner
+	jal	print_str
 	
-	lw		$ra, 0($sp)
+	lw	$ra, 0($sp)
 	addi	$sp, $sp, 4
-	jr		$ra
+	jr	$ra
