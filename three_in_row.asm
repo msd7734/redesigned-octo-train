@@ -107,7 +107,7 @@ readb_loop:
 	add	$t3, $s1, $t2		# t3 = board+offset
 	sw	$v0, 0($t3)		# board[i] = v0
 
-	addi	$t0, $t0, 1		Z# i++
+	addi	$t0, $t0, 1		# i++
 	j	readb_loop
 	
 readb_end:
