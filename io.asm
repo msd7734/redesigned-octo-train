@@ -62,6 +62,7 @@ newline:
 	.globl print_template_row
 	.globl print_board_hedge
 	.globl print_template
+	.globl print_bstate_row
 	
 #############################
 # print_bad_data_warn
@@ -212,8 +213,46 @@ pt_done:
 	addi	$sp, $sp, 16
 	jr	$ra
 	
+#############################
+# print_bstate_row
+# Print a row from a "real" (non-template) board.
+# Args:
+#  a0 - Length of a board row
+#  a1 - Integer (halfword) representation of valid final board row (no unknowns)
+#  	This should be generated from validrows.asm.
+# 	As a binary number, 0 is white, 1 is black.
+#############################
 print_bstate_row:
+	addi	$sp, $sp, -4
+	sw	$ra, 0($sp)
 	
+	move	$t0, $a0		# t0 as len = a0
+	move	$t1, $a1		# t1 as row = a1
+	
+	li	$t2, 0			# t2 as i = 0
+pbr_loop:
+	slt	$t3, $t2, $t0		# if !(i < length), done
+	beq	$t3, $zero, pbr_done
+	
+	sub	$t3, $t0, $t2		# t3 as rshift_coef = len - i - 1
+	addi	$t3, $t3, -1
+	srlv	$t3, $t1, $t3		# t3 as row_shift = row >> rshift_coef
+	li	$t4, 1
+	and	$t4, $t3, $t4		# t4 as ibit = row_shift & 1
+	
+	beq	$t4, $zero, pbr_white	# if ibit == 0, white; else, black.
+	la	$a0, black
+	jal	print_str
+	j	pbr_loop_end
+pbr_white:
+	la	$a0, white
+	jal	print_str
+pbr_loop_end:
+	addi	$t2, $t2, 1
+	j	pbr_loop
+pbr_done:
+	lw	$ra, 0($sp)
+	addi	$sp, $sp, 4
 	jr	$ra
 	
 #############################

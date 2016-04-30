@@ -1,4 +1,4 @@
-1. Print template state
+1. Print template state | O
 2. Print valid row
 3. Write row to board
 4. Transpose valid row into valid column
@@ -6,6 +6,9 @@
 6. Print board
  - Convert int to binary string
 7. Backtracking algorithm
+8. Validate board
+ - Validate across for board A
+ - Validate across for Transpose(A)
 
 flags:
 	.word 0x00000001

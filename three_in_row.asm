@@ -56,6 +56,7 @@ bbuf:
 	.globl print_template_row
 	.globl print_board_hedge
 	.globl print_template
+	.globl print_bstate_row
 	
 	# External definitions
 	# ====================
