@@ -12,13 +12,13 @@ size_err:
 # data pointer table
 rows_tbl:
 	.word	row_bsize2
-	.word	row_bsize3
+	.word	0xBAD
 	.word	row_bsize4
-	.word	row_bsize5
+	.word	0xBAD
 	.word	row_bsize6
-	.word	row_bsize7
+	.word	0xBAD
 	.word	row_bsize8
-	.word	row_bsize9
+	.word	0xBAD
 	.word	row_bsize10
 	
 # Valid rows for board size 2
