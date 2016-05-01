@@ -18,6 +18,8 @@ err_badsize:
 	.asciiz "Invalid board size, 3-In-A-Row terminating\n"
 err_badinput:
 	.asciiz "Illegal input value, 3-In-A-Row terminating\n"
+err_badpuzzle:
+	.asciiz "Impossible Puzzle\n\n"
 
 # Message output
 banner:
@@ -144,6 +146,11 @@ padb_end:
 	la	$a0, newline
 	jal	print_str
 	
+	move	$a0, $s0
+	move	$a1, $s1
+	jal	b_from_template
+	beq	$v0, $zero, bad_puzzle
+	
 	la	$a0, finalpzl
 	jal	print_str
 	
@@ -163,6 +170,10 @@ bad_board:
 	j	main_done
 bad_input:
 	la	$a0, err_badinput
+	jal	print_str
+	j	main_done
+bad_puzzle:
+	la	$a0, err_badpuzzle
 	jal	print_str
 	
 main_done:

@@ -31,33 +31,62 @@ board_t:
 valid_for_row1:
 	.space 2
 	.space MAX_VALID*2
+	
+	.align 2
+	
 valid_for_row2:
 	.space 2
 	.space MAX_VALID*2
+	
+	.align 2
+	
 valid_for_row3:
 	.space 2
 	.space MAX_VALID*2
+	
+	.align 2
+	
 valid_for_row4:
 	.space 2
 	.space MAX_VALID*2
+	
+	.align 2
+	
 valid_for_row5:
 	.space 2
 	.space MAX_VALID*2
+	
+	.align 2
+	
 valid_for_row6:
 	.space 2
 	.space MAX_VALID*2
+	
+	.align 2
+	
 valid_for_row7:
 	.space 2
 	.space MAX_VALID*2
+	
+	.align 2
+	
 valid_for_row8:
 	.space 2
 	.space MAX_VALID*2
+	
+	.align 2
+	
 valid_for_row9:
 	.space 2
 	.space MAX_VALID*2
+	
+	.align 2
+	
 valid_for_row10:
 	.space 2
 	.space MAX_VALID*2
+	
+	.align 2
 	
 filtered_rows:
 	.word valid_for_row1	
@@ -123,6 +152,8 @@ valid_row_storage:
 # Args:
 #  a0 - Length of a board row
 #  a1 - Pointer to a template used to filter valid rows.
+# Returns:
+#  v0 - 1 if success and ready for solving attempts, 0 if puzzle is impossible
 #############################
 b_from_template:
 	addi	$sp, $sp, -36
@@ -136,11 +167,49 @@ b_from_template:
 	sw	$s0, 4($sp)
 	sw	$ra, 0($sp)
 	
+	move	$s0, $a0		# s0 = len
+	move	$s1, $a1		# s1 = template&
+	li	$s2, 0			# s2 as i = 0
 	
 bft_loop:
+	slt	$t0, $s2, $s0
+	beq	$t0, $zero, bft_done
 	
+	# call valid_row_storage for each template row
+	#  - if we get back 0, we can return with 0 (impossible puzzle)
+	# if there proves to be issues, we can pad with sentinel vals
+	# but I'm going to skip that for now. The empty buffer is good to go.
+	
+	# setup arg2 - pointer to storage
+	move	$a0, $s2
+	jal	valid_row_storage
+	move	$a2, $v0
+	
+	# setup arg1 - pointer to template row
+	mul	$t0, $s0, 4		# t0 = (len*4) * i
+	mul	$t0, $t0, $s2
+	add	$a1, $s1, $t0		# a1 = template + offset
+	
+	# setup arg0 - board size
+	move	$a0, $s0
+	
+	jal	get_filtered_row
+	beq	$v0, $zero, bft_done	# if no valid rows, impossible puzzle
+	
+	addi	$s2, $s2, 1
+	j	bft_loop
 	
 bft_done:
+	# la	$t0, valid_for_row2
+	# lh	$a0, 0($t0)
+	# jal	print_int
+	# la	$a0, newline
+	# jal	print_str
+	# lh	$a0, 2($t0)
+	# jal	print_int
+	# la	$a0, newline
+	# jal	print_str
+
 	lw	$s7, 32($sp)
 	lw	$s6, 28($sp)
 	lw	$s5, 24($sp)
@@ -165,7 +234,7 @@ bft_done:
 # 		int16 row_data[count];
 # 	}
 # Returns:
-#  v0 - # valid rows found and stored
+#  v0 - # of valid rows found and stored
 #############################
 get_filtered_row:
 	addi	$sp, $sp, -36
