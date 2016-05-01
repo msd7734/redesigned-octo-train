@@ -13,6 +13,22 @@ SENTINEL=	0xBAD			# 2989, 0b101110101101
 	.data
 	.align 2
 
+# Test data
+testb1:
+	.half 0x1
+	.half 0x2
+testb2:
+	.half 0x003
+	.half 0x005
+	.half 0x009
+	.half 0x00c
+	
+testb3:
+	.half 0x003
+	.half 0x005
+	.half 0x001
+	.half 0x00c
+	
 # Error messages
 err_badsize:
 	.asciiz "Invalid board size, 3-In-A-Row terminating\n"
@@ -64,6 +80,7 @@ bbuf:
 	.globl b_from_template
 	.globl get_black_mask
 	.globl get_white_mask
+	.globl is_solution
 	
 	# External definitions
 	# ====================
@@ -150,6 +167,18 @@ padb_end:
 	move	$a1, $s1
 	jal	b_from_template
 	beq	$v0, $zero, bad_puzzle
+	
+	# testing is_solution
+	move	$a0, $s0
+	la	$a1, testb3
+	move	$a2, $a1	# can't handle transpose yet
+	jal	is_solution
+	
+	move	$a0, $v0
+	jal	print_int
+	
+	la	$a0, newline
+	jal	print_str
 	
 	la	$a0, finalpzl
 	jal	print_str

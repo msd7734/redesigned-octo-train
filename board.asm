@@ -123,6 +123,7 @@ filtered_rows:
 	.globl get_black_mask
 	.globl get_white_mask
 	.globl hword_bin_search
+	.globl is_solution
 
 	
 #############################
@@ -417,10 +418,35 @@ is_solution:
 	move	$s1, $a1	# s1 = board
 	move	$s2, $a2	# s2 = transpose
 	
-	jal	valid_rows
-	move	$s3, $v0
+	li	$s4, 0		# s4 as i = 0
+issol_loop:
+	slt	$t0, $s4, $s0		# if !(i < len) then done
+	beq	$t0, $zero, issol_yes
 	
+	move	$a0, $s4		# all validated possibilities for row i
+	jal	valid_row_storage
+	lh	$a0, 0($v0)		# a0 = row_listing.count
+	add	$a1, $v0, 2		# a1 = row_listing.data&
 	
+	mul	$t0, $s4, 2
+	add	$t1, $s1, $t0
+	lh	$a2, 0($t1)		# a2 = board[i]
+	
+	jal	hword_bin_search		# search for row
+	
+	# TODO: Check transpose too!
+	
+	slt	$t0, $v0, $zero			# search = -1 if not found
+	beq	$t0, $zero, issol_loop_end	# if not found, return 0
+	li	$v0, 0
+	j	issol_done
+	
+issol_loop_end:
+	addi	$s4, $s4, 1
+	j	issol_loop
+issol_yes:
+	li	$v0, 1		# all rows and cols were found valid
+issol_done:
 	lw	$s7, 32($sp)
 	lw	$s6, 28($sp)
 	lw	$s5, 24($sp)
