@@ -29,34 +29,34 @@ board_t:
 
 # for each row, need enough to fit bsize=10, template=all unknown
 valid_for_row1:
-	.space 4
+	.space 2
 	.space MAX_VALID*2
 valid_for_row2:
-	.space 4
+	.space 2
 	.space MAX_VALID*2
 valid_for_row3:
-	.space 4
+	.space 2
 	.space MAX_VALID*2
 valid_for_row4:
-	.space 4
+	.space 2
 	.space MAX_VALID*2
 valid_for_row5:
-	.space 4
+	.space 2
 	.space MAX_VALID*2
 valid_for_row6:
-	.space 4
+	.space 2
 	.space MAX_VALID*2
 valid_for_row7:
-	.space 4
+	.space 2
 	.space MAX_VALID*2
 valid_for_row8:
-	.space 4
+	.space 2
 	.space MAX_VALID*2
 valid_for_row9:
-	.space 4
+	.space 2
 	.space MAX_VALID*2
 valid_for_row10:
-	.space 4
+	.space 2
 	.space MAX_VALID*2
 	
 filtered_rows:
@@ -71,6 +71,7 @@ filtered_rows:
 	.word valid_for_row9	
 	.word valid_for_row10	
 	
+
 	.text
 	.align 2
 	
@@ -78,11 +79,39 @@ filtered_rows:
 	# ===================
 	.globl valid_rows
 	
+	# io.asm
+	.globl newline
+	
+	.globl print_int
+	.globl print_str
+	.globl read_int
+	
 	# External definitions
 	# ====================
 	.globl b_from_template
 	.globl get_black_mask
 	.globl get_white_mask
+
+	
+#############################
+# valid_row_storage
+# Get a pointer to valid rows values for a given row.
+# Subroutine makes no guarantees whether memory is already initialized.
+# Args:
+#  a0 - Row number 0 to (MAX_BSIZE-1)
+# Returns:
+#  v0 - Pointer to a storage location in the format:
+# 	struct row_listing {
+# 		int16 count;
+# 		int16 row_data[count];
+# 	}
+#############################
+valid_row_storage:
+	la	$t0, filtered_rows
+	mul	$t1, $a0, 4
+	add	$t0, $t0, $t1
+	lw	$v0, 0($t0)
+	jr	$ra
 	
 #############################
 # b_from_template
@@ -108,6 +137,8 @@ b_from_template:
 	sw	$ra, 0($sp)
 	
 	
+bft_loop:
+	
 	
 bft_done:
 	lw	$s7, 32($sp)
@@ -123,13 +154,20 @@ bft_done:
 	jr	$ra
 
 #############################
-# get_filtered_rows
-# Filter all valid rows for given board size and template, and store them.
+# get_filtered_row
+# Filter all valid rows for given board template row and store them.
 # Args:
 #  a0 - Length of a board row
 #  a1 - Pointer to a template used to filter valid rows.
+#  a2 - Pointer to row_listing where validated rows will be stored.
+#  	struct row_listing {
+# 		int16 count;
+# 		int16 row_data[count];
+# 	}
+# Returns:
+#  v0 - # valid rows found and stored
 #############################
-get_filtered_rows:
+get_filtered_row:
 	addi	$sp, $sp, -36
 	sw	$s7, 32($sp)
 	sw	$s6, 28($sp)
@@ -142,20 +180,51 @@ get_filtered_rows:
 	sw	$ra, 0($sp)
 	
 	jal	valid_rows
-	
 	lh	$s0, 0($v0)		# s0 as size = row_listing.count
-	addi	$s1, $v0, 4		# s1 as data* = row_listing+4
-		
+	addi	$s1, $v0, 2		# s1 as data* = (row_listing&)+2
+	
+	jal	get_black_mask		# s3 as blkmask = get_black_mask(a0,a1)
+	move	$s3, $v0
+	jal	get_white_mask		# s4 as whtmask = get_white_mask(a0,a1)
+	move	$s4, $v0
+	
+	addi	$s5, $a2, 2		# s5 = ptr to storage in row_listing
+	
+	li	$v0, 0
+	
+	# loop through every possible valid row
 	li	$s2, 0			# s2 as i = 0
 gfr_loop:	
 	slt	$t0, $s2, $s0		# if !(i < size), done
 	beq	$t0, $zero, gfr_done
 	
+	mul	$t0, $s2, 2		# offset = i*2
+	add	$t0, $s1, $t0		# t0 = data+offset
+	lh	$t0, 0($t0)		# t0 as row_candidate = data[i]
 	
+	# if blkmask & row_candidate = blkmask
+	#   && whtmask | row_candidate = whtmask
+	# Then given row is valid for template
 	
+	and	$t1, $t0, $s3		# t1 = row_candidate & blkmask
+	or	$t2, $t0, $s4		# t2 = row_candidate | whtmask
+	
+	sub	$t1, $s3, $t1
+	sub	$t2, $s4, $t2
+	add	$t3, $t1, $t2
+	
+	bne	$t3, $zero, gfr_loop_end
+	
+	# store the now validated row candidate and incr. ptr
+	sh	$t0, 0($s5)
+	addi	$s5, $s5, 2
+	addi	$v0, $v0, 1
+gfr_loop_end:
 	addi	$s2, $s2, 1
 	j	gfr_loop
 gfr_done:
+	sh	$v0, 0($a2)	# row_listing.count = count
+
 	lw	$s7, 32($sp)
 	lw	$s6, 28($sp)
 	lw	$s5, 24($sp)
@@ -238,7 +307,7 @@ gwhm_loop:
 	# else, treat as 1 (black)
 	
 	addi	$t4, $t3, -1
-	beq	$t4, $zero, gblm_loop_end
+	beq	$t4, $zero, gwhm_loop_end
 	or	$v0, $v0, $t2
 gwhm_loop_end:
 	addi	$t0, $t0, -1

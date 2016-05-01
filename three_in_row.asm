@@ -59,6 +59,7 @@ bbuf:
 	.globl print_bstate_row
 	
 	# board.asm
+	.globl b_from_template
 	.globl get_black_mask
 	.globl get_white_mask
 	

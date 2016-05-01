@@ -43,3 +43,77 @@ flags:
 	.word 0x20000000
 	.word 0x40000000
 	.word 0x80000000
+	
+The following code will test the get_filtered_row subroutine
+	
+#############################
+# b_from_template
+# Initialize an empty board state based on a given template.
+# Initialization entails:
+# 	- Padding unused buffer space (rows) with sentinel values
+#	- Storing a set of filtered valid rows based on the given template.
+# 	- Initializing the board transpose
+# Args:
+#  a0 - Length of a board row
+#  a1 - Pointer to a template used to filter valid rows.
+#############################
+b_from_template:
+	addi	$sp, $sp, -36
+	sw	$s7, 32($sp)
+	sw	$s6, 28($sp)
+	sw	$s5, 24($sp)
+	sw	$s4, 20($sp)
+	sw	$s3, 16($sp)
+	sw	$s2, 12($sp)
+	sw	$s1, 8($sp)
+	sw	$s0, 4($sp)
+	sw	$ra, 0($sp)
+	
+	# TEST:
+	# Give it the first row and test if it generates valid rows from template
+	
+	move	$s0, $a0
+	
+	li	$a0, 0			# get storage for row 1
+	jal	valid_row_storage
+	move	$a2, $v0
+	move	$a0, $s0
+	jal	get_filtered_row
+	
+	la	$t0, valid_for_row1
+	lh	$a0, 0($t0)
+	move	$s1, $a0
+	jal	print_int
+	la	$a0, newline
+	jal	print_str
+	
+	addi	$t0, $t0, 2
+	
+	li	$t1, 0
+bft_loop:
+	slt	$t2, $t1, $s1
+	beq	$t2, $zero, bft_done
+	
+	mul	$t3, $t1, 2
+	add	$t3, $t0, $t3
+	lh	$t4, 0($t3)
+	move	$a0, $t4
+	jal	print_int
+	la	$a0, newline
+	jal	print_str
+	
+	addi	$t1, $t1, 1
+	j	bft_loop
+	
+bft_done:
+	lw	$s7, 32($sp)
+	lw	$s6, 28($sp)
+	lw	$s5, 24($sp)
+	lw	$s4, 20($sp)
+	lw	$s3, 16($sp)
+	lw	$s2, 12($sp)
+	lw	$s1, 8($sp)
+	lw	$s0, 4($sp)
+	lw	$ra, 0($sp)
+	addi	$sp, $sp, 36
+	jr	$ra
