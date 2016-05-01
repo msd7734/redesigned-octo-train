@@ -21,6 +21,9 @@ hflags:
 	.half 0x0010, 0x0020, 0x0040, 0x0080
 	.half 0x0100, 0x0200
 
+bsize:
+	.space 4
+	
 board:
 	.space MAX_BSIZE*2	# row is hword (2 bytes)
 board_t:
@@ -119,6 +122,7 @@ filtered_rows:
 	.globl b_from_template
 	.globl get_black_mask
 	.globl get_white_mask
+	.globl hword_bin_search
 
 	
 #############################
@@ -209,6 +213,10 @@ bft_done:
 	# la	$a0, newline
 	# jal	print_str
 
+	# store board size
+	la	$t0, bsize
+	sw	$s0, 0($t0)
+	
 	lw	$s7, 32($sp)
 	lw	$s6, 28($sp)
 	lw	$s5, 24($sp)
@@ -383,3 +391,124 @@ gwhm_loop_end:
 gwhm_done:
 	jr	$ra
 	
+#############################
+# is_solution
+# Check if the given board is solved.
+# Args:
+#  a0 - Length of a board row
+#  a1 - Pointer to a board
+#  a2 - Pointer to a1's transpose
+# Returns:
+#  v0 - 1 if valid solution, 0 if not.
+#############################
+is_solution:
+	addi	$sp, $sp, -36
+	sw	$s7, 32($sp)
+	sw	$s6, 28($sp)
+	sw	$s5, 24($sp)
+	sw	$s4, 20($sp)
+	sw	$s3, 16($sp)
+	sw	$s2, 12($sp)
+	sw	$s1, 8($sp)
+	sw	$s0, 4($sp)
+	sw	$ra, 0($sp)
+	
+	move	$s0, $a0	# s0 = len
+	move	$s1, $a1	# s1 = board
+	move	$s2, $a2	# s2 = transpose
+	
+	jal	valid_rows
+	move	$s3, $v0
+	
+	
+	lw	$s7, 32($sp)
+	lw	$s6, 28($sp)
+	lw	$s5, 24($sp)
+	lw	$s4, 20($sp)
+	lw	$s3, 16($sp)
+	lw	$s2, 12($sp)
+	lw	$s1, 8($sp)
+	lw	$s0, 4($sp)
+	lw	$ra, 0($sp)
+	addi	$sp, $sp, 36
+	jr	$ra
+
+#############################
+# hword_bin_search
+# Perform a binary search where the data is stored as 16bit increments.
+# Args:
+#  a0 - Length of data
+#  a1 - Ptr to data to search
+#  a2 - Value to search for
+# Returns:
+#  v0 - Index where search was found, or -1 if not found.
+#############################	
+hword_bin_search:
+	addi	$sp, $sp, -36
+	sw	$s7, 32($sp)
+	sw	$s6, 28($sp)
+	sw	$s5, 24($sp)
+	sw	$s4, 20($sp)
+	sw	$s3, 16($sp)
+	sw	$s2, 12($sp)
+	sw	$s1, 8($sp)
+	sw	$s0, 4($sp)
+	sw	$ra, 0($sp)
+	
+	move	$s0, $a0	# s0 = len
+	move	$s1, $a1	# s1 = data*
+	move	$s2, $a2	# s2 = val
+	
+	srl	$s3, $s0, 1	# s3 as pivot_index = (len//2)
+	mul	$t0, $s3, 2	# t0 as pivot_offset = pivot_index*2
+	add	$t0, $s1, $t0	# t0 = data + pivot_offset
+	lh	$t1, 0($t0)	# t1 as pivot = data[pivot_index]
+	
+	beq	$s2, $t1, bin_search_match	# if val = pivot
+bin_search_nomatch:
+	# if len = 1 and nomatch, return -1
+	addi	$t2, $s0, -1		
+	beq	$t2, $zero, bin_search_notfound
+	
+	# if val < pivot, change len but not data pointer
+	# if val > pivot, change len AND data pointer
+	slt	$t2, $s2, $t1
+	bne	$t2, $zero, bin_search_less
+	
+	addi	$a1, $t0, 2	# new data = data + pivot_offset+2
+	addi	$s4, $s3, 1	# dropping this many indeces from search space
+	addi	$a0, $s3, -1	# new length = pivot_index - 1 + (len%2)
+	li	$t4, 2
+	div	$s0, $t4
+	mfhi	$t4
+	add	$a0, $a0, $t4
+	j	bin_search_recurse
+bin_search_less:
+	li	$s4, 0		# dropping no indeces if less than
+	move	$a0, $s3	# new length = pivot_index
+bin_search_recurse:
+	
+	jal	hword_bin_search
+	slt	$t3, $v0, $zero			# if -1, done
+	bne	$t3, $zero, bin_search_done
+	add	$v0, $s4, $v0			# offset returned index
+	j	bin_search_done
+	
+bin_search_notfound:
+	li	$v0, -1		# return -1
+	j	bin_search_done
+bin_search_match:
+	move	$v0, $s3	# return pivot_index
+bin_search_done:
+	
+	lw	$s7, 32($sp)
+	lw	$s6, 28($sp)
+	lw	$s5, 24($sp)
+	lw	$s4, 20($sp)
+	lw	$s3, 16($sp)
+	lw	$s2, 12($sp)
+	lw	$s1, 8($sp)
+	lw	$s0, 4($sp)
+	lw	$ra, 0($sp)
+	addi	$sp, $sp, 36
+	jr	$ra

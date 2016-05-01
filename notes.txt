@@ -4,11 +4,14 @@
 4. Transpose valid row into valid column
 5. Write col to board
 6. Print board
- - Convert int to binary string
 7. Backtracking algorithm
 8. Validate board
  - Validate across for board A
  - Validate across for Transpose(A)
+ 
+ Use the stack to hold transitional board states!
+ 
+ hword_bin_search(row_listing(8).len (34)), row_listing.data, 22) 210 (0xd2) fails
 
 flags:
 	.word 0x00000001
@@ -118,3 +121,24 @@ bft_done:
 	lw	$ra, 0($sp)
 	addi	$sp, $sp, 36
 	jr	$ra
+	
+The following code will test binary search:	
+	
+	jal	read_int		# read board size
+	move	$s0, $v0		# s0 = board size
+	
+	# testing hword_bin_search
+	jal	read_int		# read search val
+	move	$s1, $v0
+	
+	move	$a0, $s0
+	jal	valid_rows
+	lh	$a0, 0($v0)
+	addi	$a1, $v0, 2
+	move	$a2, $s1	# search for 1
+	jal	hword_bin_search
+	move	$a0, $v0
+	jal	print_int
+	la	$a0, newline
+	jal	print_str
+	j	main_done	
