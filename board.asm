@@ -124,6 +124,7 @@ filtered_rows:
 	.globl get_white_mask
 	.globl hword_bin_search
 	.globl is_solution
+	.globl bit_from_coord
 
 	
 #############################
@@ -217,6 +218,78 @@ bft_done:
 	# store board size
 	la	$t0, bsize
 	sw	$s0, 0($t0)
+	
+	lw	$s7, 32($sp)
+	lw	$s6, 28($sp)
+	lw	$s5, 24($sp)
+	lw	$s4, 20($sp)
+	lw	$s3, 16($sp)
+	lw	$s2, 12($sp)
+	lw	$s1, 8($sp)
+	lw	$s0, 4($sp)
+	lw	$ra, 0($sp)
+	addi	$sp, $sp, 36
+	jr	$ra
+
+#############################
+# bit_from_coord
+# Get the bit from row i, col j off the given board state.
+# Bits are laid out like this:
+# 3    0
+# +----+ i = 0
+# |....|
+# |....|
+# |....|
+# |....|
+# +----+ 3
+#      j = 0
+# Args:
+#  a0 - row i
+#  a1 - col j
+#  a2 - ptr to board
+#############################
+bit_from_coord:
+	
+	la	$t0, bsize	# validate coord
+	lw	$t0, 0($t0)
+	slt	$t1, $a0, $t0	# i < bsize && j < bsize
+	slt	$t2, $a1, $t0
+	and	$t3, $t1, $t2
+	beq	$t3, $zero, bfc_badcoord
+	
+	mul	$t1, $a0, 2
+	add	$t1, $a2, $t1
+	lh	$t2, 0($t1)
+	
+	srlv	$t3, $t2, $a1
+	andi	$v0, $t3, 1
+	
+	j	bfc_done
+bfc_badcoord:
+	li	$v0, 0xBAD
+bfc_done:
+	jr	$ra
+	
+#############################
+# b_transpose
+# Take the stored board state and compute its transpose.
+#############################
+b_transpose:
+	addi	$sp, $sp, -36
+	sw	$s7, 32($sp)
+	sw	$s6, 28($sp)
+	sw	$s5, 24($sp)
+	sw	$s4, 20($sp)
+	sw	$s3, 16($sp)
+	sw	$s2, 12($sp)
+	sw	$s1, 8($sp)
+	sw	$s0, 4($sp)
+	sw	$ra, 0($sp)
+	
+	# To build the mth tranpose row:
+	# For each row in the board:
+	#  - For i in len:
+	#  - bit(i) = row(len-i-1).bit(len-m-1)
 	
 	lw	$s7, 32($sp)
 	lw	$s6, 28($sp)
