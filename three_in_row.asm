@@ -184,10 +184,21 @@ padb_end:
 	jal	b_from_template
 	beq	$v0, $zero, bad_puzzle
 	
-	# # testing is_solution
-	# move	$a0, $s0
-	# la	$a1, testb3
-	# move	$a2, $a1	# can't handle transpose yet
+	# testing is_solution
+	# jal	print_board
+	# la	$a0, newline
+	# jal	print_str
+	# jal	print_board_t
+	# la	$a0, newline
+	# jal	print_str
+	# la	$a0, testb1
+	# jal	write_board
+	# jal	print_board
+	# la	$a0, newline
+	# jal	print_str
+	# jal	print_board_t
+	# la	$a0, newline
+	# jal	print_str
 	# jal	is_solution
 	# move	$a0, $v0
 	# jal	print_int
@@ -267,12 +278,12 @@ padb_end:
 	# jal	print_board_t
 	# la	$a0, newline
 	# jal	print_str
-	# la	$a0, finalpzl
-	# jal	print_str
 	
-	move	$a0, $s0
-	move	$a1, $s1
-	jal	print_template
+	
+	la	$a0, finalpzl
+	jal	print_str
+	
+	jal	print_board
 	
 	la	$a0, newline
 	jal	print_str

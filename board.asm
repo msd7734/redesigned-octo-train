@@ -688,16 +688,13 @@ gwhm_done:
 	
 #############################
 # is_solution
-# Check if the given board is solved.
-# Args:
-#  a0 - Length of a board row
-#  a1 - Pointer to a board
-#  a2 - Pointer to a1's transpose
+# Check if the stored board is solved.
 # Returns:
 #  v0 - 1 if valid solution, 0 if not.
 #############################
 is_solution:
-	addi	$sp, $sp, -24
+	addi	$sp, $sp, -28
+	sw	$s5, 24($sp)
 	sw	$s4, 20($sp)
 	sw	$s3, 16($sp)
 	sw	$s2, 12($sp)
@@ -705,9 +702,10 @@ is_solution:
 	sw	$s0, 4($sp)
 	sw	$ra, 0($sp)
 	
-	move	$s0, $a0	# s0 = len
-	move	$s1, $a1	# s1 = board
-	move	$s2, $a2	# s2 = transpose
+	la	$t0, bsize
+	lw	$s0, 0($t0)	# s0 = len
+	la	$s1, board      # s1 = board
+	la	$s2, board_t    # s2 = transpose
 	
 	li	$s4, 0		# s4 as i = 0
 issol_loop:
@@ -719,15 +717,24 @@ issol_loop:
 	lh	$a0, 0($v0)		# a0 = row_listing.count
 	add	$a1, $v0, 2		# a1 = row_listing.data&
 	
+	# check board (rows)
 	mul	$t0, $s4, 2
 	add	$t1, $s1, $t0
 	lh	$a2, 0($t1)		# a2 = board[i]
 	
-	jal	hword_bin_search		# search for row
+	jal	hword_bin_search	# search for row
+	move	$s5, $v0		# s5 = board search result
 	
-	# TODO: Check transpose too!
 	
-	slt	$t0, $v0, $zero			# search = -1 if not found
+	# Check board transpose (columns)
+	mul	$t0, $s4, 2
+	add	$t1, $s2, $t0
+	lh	$a2, 0($t1)		# a2 = transpose[i]
+	jal	hword_bin_search	# v0 = transpose search result
+	
+	slt	$t0, $s5, $zero			# search = -1 if not found
+	slt	$t1, $v0, $zero
+	or	$t0, $t0, $t1			# bsearch < 0 || tsearch < 0
 	beq	$t0, $zero, issol_loop_end	# if not found, return 0
 	li	$v0, 0
 	j	issol_done
@@ -738,13 +745,14 @@ issol_loop_end:
 issol_yes:
 	li	$v0, 1		# all rows and cols were found valid
 issol_done:
+	lw	$s5, 24($sp)
 	lw	$s4, 20($sp)
 	lw	$s3, 16($sp)
 	lw	$s2, 12($sp)
 	lw	$s1, 8($sp)
 	lw	$s0, 4($sp)
 	lw	$ra, 0($sp)
-	addi	$sp, $sp, 24
+	addi	$sp, $sp, 28
 	jr	$ra
 
 #############################
