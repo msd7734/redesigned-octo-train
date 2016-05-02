@@ -125,6 +125,7 @@ filtered_rows:
 	.globl hword_bin_search
 	.globl is_solution
 	.globl bit_from_coord
+	.globl set_bit
 
 	
 #############################
@@ -268,6 +269,53 @@ bit_from_coord:
 bfc_badcoord:
 	li	$v0, 0xBAD
 bfc_done:
+	jr	$ra
+
+#############################
+# set_bit
+# Set the bit from row i, col j on the given board state.
+# Bits are laid out like this:
+# 3    0
+# +----+ i = 0
+# |....|
+# |....|
+# |....|
+# |....|
+# +----+ 3
+#      j = 0
+# Args:
+#  a0 - row i
+#  a1 - col j
+#  a2 - ptr to board
+#  a3 - bit value 0 or 1
+#############################	
+set_bit:
+	la	$t0, bsize	# validate coord
+	lw	$t0, 0($t0)
+	slt	$t1, $a0, $t0	# i < bsize && j < bsize
+	slt	$t2, $a1, $t0
+	and	$t3, $t1, $t2
+	beq	$t3, $zero, set_bit_badcoord
+
+	la	$t9, hflags	# t0 = bit flag j
+	mul	$t0, $a1, 2
+	add	$t0, $t9, $t0
+	lhu	$t0, 0($t0)
+	
+	mul	$t1, $a0, 2	# t2 = ith row val
+	add	$t1, $a2, $t1
+	lhu	$t2, 0($t1)
+	
+	bne	$a3, $zero, set_1
+set_0:
+	nor	$t9, $t0, $zero	# bit flag complement
+	and	$t9, $t2, $t9
+	j	set_bit_done
+set_1:
+	or	$t9, $t2, $t0
+set_bit_done:
+	sh	$t9, 0($t1)
+set_bit_badcoord:
 	jr	$ra
 	
 #############################

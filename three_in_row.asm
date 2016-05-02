@@ -83,6 +83,7 @@ bbuf:
 	.globl get_white_mask
 	.globl is_solution
 	.globl bit_from_coord
+	.globl set_bit
 	
 	# External definitions
 	# ====================
@@ -196,6 +197,21 @@ padb_end:
 	# jal	bit_from_coord
 	# move	$a0, $v0
 	# jal	print_int
+	# la	$a0, newline
+	# jal	print_str
+	
+	# testing set_bit
+	# jal	read_int
+	# move	$a0, $v0
+	# jal	read_int
+	# move	$a1, $v0
+	# la	$a2, testb2
+	# jal	read_int
+	# move	$a3, $v0
+	# jal	set_bit
+	# move	$a0, $s0
+	# la	$a1, testb2
+	# jal	print_bstate
 	# la	$a0, newline
 	# jal	print_str
 	
