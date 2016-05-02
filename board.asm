@@ -126,6 +126,7 @@ filtered_rows:
 	.globl is_solution
 	.globl bit_from_coord
 	.globl set_bit
+	.globl b_transpose
 
 	
 #############################
@@ -321,6 +322,8 @@ set_bit_badcoord:
 #############################
 # b_transpose
 # Take the stored board state and compute its transpose.
+# Returns:
+#  v0 - Pointer to the transpose, in case the caller needs it.
 #############################
 b_transpose:
 	addi	$sp, $sp, -36
@@ -334,10 +337,61 @@ b_transpose:
 	sw	$s0, 4($sp)
 	sw	$ra, 0($sp)
 	
+	# secretly take in and use a0 for testing purposes
+	# move	$s1, $a0
+	la	$s1, board	# s1 = board
+	la	$s2, board_t	# s2 = transpose
+	
+	la	$t0, bsize
+	lh	$s0, 0($t0)	# s0 = len
+	
 	# To build the mth tranpose row:
 	# For each row in the board:
 	#  - For i in len:
-	#  - bit(i) = row(len-i-1).bit(len-m-1)
+	#  - board_t.row(m).bit(i) = board.row(len-i-1).bit(len-m-1)
+	
+	li	$s3, 0		# s3 as m = 0
+		
+btr_loop:
+	slt	$t0, $s3, $s0
+	beq	$t0, $zero, btr_done
+	
+	mul	$t0, $s3, 2
+	add	$t0, $s1, $t0
+	lhu	$t1, 0($t0)	# t1 = board[m] (row m)
+	
+	li	$s4, 0		# s4 as i = 0
+btr_inner_loop:
+	slt	$t0, $s4, $s0
+	beq	$t0, $zero, btr_inner_loop_end
+	
+	# v0 = bit_from_coord(len-i-1, len-m-1, board)
+	# row
+	sub	$a0, $s0, $s4
+	addi	$a0, $a0, -1
+	
+	# col
+	sub	$a1, $s0, $s3
+	addi	$a1, $a1, -1
+	
+	move	$a2, $s1
+	jal	bit_from_coord
+	
+	# set_bit(m, i, board_t, v0)
+	move	$a3, $v0
+	move	$a0, $s3
+	move	$a1, $s4
+	move	$a2, $s2
+	jal	set_bit
+	
+	addi	$s4, $s4, 1
+	j	btr_inner_loop
+btr_inner_loop_end:
+	addi	$s3, $s3, 1
+	j	btr_loop
+btr_done:
+	# return board_t
+	move	$v0, $s2
 	
 	lw	$s7, 32($sp)
 	lw	$s6, 28($sp)

@@ -29,6 +29,14 @@ testb3:
 	.half 0x001
 	.half 0x00c
 	
+testb4:
+	.half 0x01a
+	.half 0x034
+	.half 0
+	.half 0
+	.half 0
+	.half 0
+	
 # Error messages
 err_badsize:
 	.asciiz "Invalid board size, 3-In-A-Row terminating\n"
@@ -84,6 +92,7 @@ bbuf:
 	.globl is_solution
 	.globl bit_from_coord
 	.globl set_bit
+	.globl b_transpose
 	
 	# External definitions
 	# ====================
@@ -183,7 +192,7 @@ padb_end:
 	
 	# testing print_bstate
 	move	$a0, $s0
-	la	$a1, testb2
+	la	$a1, testb4
 	jal	print_bstate
 	la	$a0, newline
 	jal	print_str
@@ -211,6 +220,16 @@ padb_end:
 	# jal	set_bit
 	# move	$a0, $s0
 	# la	$a1, testb2
+	# jal	print_bstate
+	# la	$a0, newline
+	# jal	print_str
+	
+	
+	# testing b_transpose
+	# la	$a0, testb4
+	# jal	b_transpose
+	# move	$a0, $s0
+	# move	$a1, $v0
 	# jal	print_bstate
 	# la	$a0, newline
 	# jal	print_str
