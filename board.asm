@@ -340,7 +340,6 @@ wr_done:
 #  a2 - ptr to board
 #############################
 bit_from_coord:
-	
 	la	$t0, bsize	# validate coord
 	lw	$t0, 0($t0)
 	slt	$t1, $a0, $t0	# i < bsize && j < bsize
@@ -415,10 +414,7 @@ set_bit_badcoord:
 #  v0 - Pointer to the transpose, in case the caller needs it.
 #############################
 b_transpose:
-	addi	$sp, $sp, -36
-	sw	$s7, 32($sp)
-	sw	$s6, 28($sp)
-	sw	$s5, 24($sp)
+	addi	$sp, $sp, -24
 	sw	$s4, 20($sp)
 	sw	$s3, 16($sp)
 	sw	$s2, 12($sp)
@@ -483,16 +479,13 @@ btr_done:
 	# return board_t
 	move	$v0, $s2
 	
-	lw	$s7, 32($sp)
-	lw	$s6, 28($sp)
-	lw	$s5, 24($sp)
 	lw	$s4, 20($sp)
 	lw	$s3, 16($sp)
 	lw	$s2, 12($sp)
 	lw	$s1, 8($sp)
 	lw	$s0, 4($sp)
 	lw	$ra, 0($sp)
-	addi	$sp, $sp, 36
+	addi	$sp, $sp, 24
 	jr	$ra
 
 #############################
@@ -668,10 +661,7 @@ gwhm_done:
 #  v0 - 1 if valid solution, 0 if not.
 #############################
 is_solution:
-	addi	$sp, $sp, -36
-	sw	$s7, 32($sp)
-	sw	$s6, 28($sp)
-	sw	$s5, 24($sp)
+	addi	$sp, $sp, -24
 	sw	$s4, 20($sp)
 	sw	$s3, 16($sp)
 	sw	$s2, 12($sp)
@@ -712,16 +702,13 @@ issol_loop_end:
 issol_yes:
 	li	$v0, 1		# all rows and cols were found valid
 issol_done:
-	lw	$s7, 32($sp)
-	lw	$s6, 28($sp)
-	lw	$s5, 24($sp)
 	lw	$s4, 20($sp)
 	lw	$s3, 16($sp)
 	lw	$s2, 12($sp)
 	lw	$s1, 8($sp)
 	lw	$s0, 4($sp)
 	lw	$ra, 0($sp)
-	addi	$sp, $sp, 36
+	addi	$sp, $sp, 24
 	jr	$ra
 
 #############################
@@ -735,10 +722,7 @@ issol_done:
 #  v0 - Index where search was found, or -1 if not found.
 #############################	
 hword_bin_search:
-	addi	$sp, $sp, -36
-	sw	$s7, 32($sp)
-	sw	$s6, 28($sp)
-	sw	$s5, 24($sp)
+	addi	$sp, $sp, -24
 	sw	$s4, 20($sp)
 	sw	$s3, 16($sp)
 	sw	$s2, 12($sp)
@@ -791,15 +775,11 @@ bin_search_notfound:
 bin_search_match:
 	move	$v0, $s3	# return pivot_index
 bin_search_done:
-	
-	lw	$s7, 32($sp)
-	lw	$s6, 28($sp)
-	lw	$s5, 24($sp)
 	lw	$s4, 20($sp)
 	lw	$s3, 16($sp)
 	lw	$s2, 12($sp)
 	lw	$s1, 8($sp)
 	lw	$s0, 4($sp)
 	lw	$ra, 0($sp)
-	addi	$sp, $sp, 36
+	addi	$sp, $sp, 24
 	jr	$ra
