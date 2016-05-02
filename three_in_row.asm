@@ -37,6 +37,14 @@ testb4:
 	.half 0x02a
 	.half 0x013
 	
+testb5:
+	.half 0x034
+	.half 0x034
+	.half 0x032
+	.half 0x01a
+	.half 0x01a
+	.half 0x02a
+	
 # Error messages
 err_badsize:
 	.asciiz "Invalid board size, 3-In-A-Row terminating\n"
@@ -182,14 +190,7 @@ padb_end:
 	jal	b_from_template
 	beq	$v0, $zero, bad_puzzle
 	
-	# testing is_solution
-	# jal	print_board
-	# la	$a0, newline
-	# jal	print_str
-	# jal	print_board_t
-	# la	$a0, newline
-	# jal	print_str
-	# la	$a0, testb1
+	# la	$a0, testb5
 	# jal	write_board
 	# jal	print_board
 	# la	$a0, newline
@@ -197,91 +198,22 @@ padb_end:
 	# jal	print_board_t
 	# la	$a0, newline
 	# jal	print_str
+	
 	# jal	is_solution
 	# move	$a0, $v0
 	# jal	print_int
 	# la	$a0, newline
 	# jal	print_str
 	
-	# testing print_bstate
-	# move	$a0, $s0
-	# la	$a1, testb4
-	# jal	print_bstate
-	# la	$a0, newline
-	# jal	print_str
-	
-	# testing bit_from_coord
-	# jal	read_int
-	# move	$a0, $v0
-	# jal	read_int
-	# move	$a1, $v0
-	# la	$a2, testb2
-	# jal	bit_from_coord
-	# move	$a0, $v0
-	# jal	print_int
-	# la	$a0, newline
-	# jal	print_str
-	
-	# testing set_bit
-	# jal	read_int
-	# move	$a0, $v0
-	# jal	read_int
-	# move	$a1, $v0
-	# la	$a2, testb2
-	# jal	read_int
-	# move	$a3, $v0
-	# jal	set_bit
-	# move	$a0, $s0
-	# la	$a1, testb2
-	# jal	print_bstate
-	# la	$a0, newline
-	# jal	print_str
-	
-	
-	# testing b_transpose
-	# la	$a0, testb4
-	# jal	b_transpose
-	# move	$a0, $s0
-	# move	$a1, $v0
-	# jal	print_bstate
-	# la	$a0, newline
-	# jal	print_str
-	
-	# testing write_row, print_board, print_board_t
-	# jal	print_board
-	# la	$a0, newline
-	# jal	print_str
-	# li	$a0, 0
-	# li	$a1, 0x1
-	# jal	write_row
-	# jal	print_board
-	# la	$a0, newline
-	# jal	print_str
-	# jal	print_board_t
-	# la	$a0, newline
-	# jal	print_str
-	
-	# testing write_board
-	# jal	print_board
-	# la	$a0, newline
-	# jal	print_str
-	# jal	print_board_t
-	# la	$a0, newline
-	# jal	print_str
-	# la	$a0, testb4
-	# jal	write_board
-	# jal	print_board
-	# la	$a0, newline
-	# jal	print_str
-	# jal	print_board_t
-	# la	$a0, newline
-	# jal	print_str
+	jal	solve_board		# solve the board
+	sub	$t0, $zero, SENTINEL
+	add	$t1, $v0, $t0		# if solution pointer = 0xBAD
+	beq	$t1, $zero, bad_puzzle	# then no solution
 	
 	
 	la	$a0, finalpzl
 	jal	print_str
-	
-	jal	print_board
+	jal	print_board		# else print final board state
 	
 	la	$a0, newline
 	jal	print_str

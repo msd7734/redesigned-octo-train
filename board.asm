@@ -31,6 +31,12 @@ board_t:
 	.space MAX_BSIZE*2	# board transpose (for checking cols)
 
 # for each row, need enough to fit bsize=10, template=all unknown
+valid_for_row0:
+	.space 2
+	.space MAX_VALID*2
+	
+	.align 2
+	
 valid_for_row1:
 	.space 2
 	.space MAX_VALID*2
@@ -85,13 +91,8 @@ valid_for_row9:
 	
 	.align 2
 	
-valid_for_row10:
-	.space 2
-	.space MAX_VALID*2
-	
-	.align 2
-	
 filtered_rows:
+	.word valid_for_row0
 	.word valid_for_row1	
 	.word valid_for_row2	
 	.word valid_for_row3	
@@ -100,9 +101,7 @@ filtered_rows:
 	.word valid_for_row6	
 	.word valid_for_row7	
 	.word valid_for_row8	
-	.word valid_for_row9	
-	.word valid_for_row10	
-	
+	.word valid_for_row9
 
 	.text
 	.align 2
@@ -153,13 +152,114 @@ valid_row_storage:
 	lw	$v0, 0($t0)
 	jr	$ra
 	
+
+#############################
+# solve_board
+# Solve the stored board state based on its stored valid rows.
+# Note: The stored board state will be invalid after running this if 
+# no solution is found.
+# Returns:
+#  v0 - Pointer to the stored solution board, or 0xBAD if no solution.
+#############################
+solve_board:
+	addi	$sp, $sp, -4
+	sw	$ra, 0($sp)
+	
+	li	$a0, 0
+	jal	permute_board
+	# jal	print_board
+	# la	$a0, newline
+	# jal	print_str
+	# jal	print_board_t
+	# la	$a0, newline
+	# jal	print_str
+	beq	$v0, $zero, solve_nosolution
+	la	$v0, board
+	j	solve_done
+solve_nosolution:
+	li	$v0, 0xBAD
+solve_done:
+	lw	$ra, 0($sp)
+	addi	$sp, $sp, 4
+	jr	$ra
+	
+#############################
+# permute_board
+# Write and subsequently check every permutation of valid board rows
+# based on the stored validated rows.
+# Args:
+#  a0 - Current row to permute
+# Returns:
+#  v0 - 1 if solution found, 0 if no solution found.
+#############################
+permute_board:
+	addi	$sp, $sp, -24
+	sw	$s4, 20($sp)
+	sw	$s3, 16($sp)
+	sw	$s2, 12($sp)
+	sw	$s1, 8($sp)
+	sw	$s0, 4($sp)
+	sw	$ra, 0($sp)
+	
+	# ensure stack is only as large as it has to be
+	
+	move	$s0, $a0		# s0 as i = row_index
+	jal	valid_row_storage
+	lh	$s1, 0($v0)		# s1 as row_count = row_listing.count
+	addi	$s2, $v0, 2		# s2 as data* = row_listing.data&
+	
+	li	$s3, 0			# s3 as r = 0
+	
+	# check if iterating over last row
+	la	$t0, bsize
+	lw	$t0, 0($t0)
+	addi	$t0, $t0, -1		# t0 = bsize-1
+	sub	$s4, $t0, $s0		# s4 = (bsize-1)-row_index
+permb_loop:
+	slt	$t0, $s3, $s1		# for r in row_listing
+	beq	$t0, $zero, permb_done
+	
+	# t8 is used nowhere else, so this is safe
+	addi	$t8, $t8, 1	# counter for debug	
+	
+	# read next valid row from listing
+	mul	$t0, $s3, 2
+	add	$t0, $s2, $t0
+	lh	$a1, 0($t0)	# a1 = data[r]
+	
+	move	$a0, $s0
+	jal	write_row	# write_row(i, data[r])
+	
+	bne	$s4, $zero, permb_recurse 	# if not last row, recurse
+permb_base_case:
+	jal	is_solution		# else, we might have a solution
+	bne	$v0, $zero, permb_done	# if is_soulution = 1, done.
+	j	permb_loop_end		# else continue to loop
+permb_recurse:
+	addi	$a0, $s0, 1
+	jal	permute_board
+	bne	$v0, $zero, permb_done	# if permute_board(i+1)=1, done.
+permb_loop_end:
+	addi	$s3, $s3, 1
+	j	permb_loop
+permb_done:
+	lw	$s4, 20($sp)
+	lw	$s3, 16($sp)
+	lw	$s2, 12($sp)
+	lw	$s1, 8($sp)
+	lw	$s0, 4($sp)
+	lw	$ra, 0($sp)
+	addi	$sp, $sp, 24
+	jr	$ra
+
 #############################
 # b_from_template
 # Initialize an empty board state based on a given template.
 # Initialization entails:
-# 	- Padding unused buffer space (rows) with sentinel values
+# 	- Padding unused buffer space (rows) with sentinel values (optional)
 #	- Storing a set of filtered valid rows based on the given template.
 # 	- Initializing the board transpose
+#	  (which entails doing nothing, since the board starts filled with 0)
 # Args:
 #  a0 - Length of a board row
 #  a1 - Pointer to a template used to filter valid rows.
@@ -693,7 +793,8 @@ gwhm_done:
 #  v0 - 1 if valid solution, 0 if not.
 #############################
 is_solution:
-	addi	$sp, $sp, -28
+	addi	$sp, $sp, -32
+	sw	$s6, 28($sp)
 	sw	$s5, 24($sp)
 	sw	$s4, 20($sp)
 	sw	$s3, 16($sp)
@@ -714,10 +815,11 @@ issol_loop:
 	
 	move	$a0, $s4		# all validated possibilities for row i
 	jal	valid_row_storage
-	lh	$a0, 0($v0)		# a0 = row_listing.count
-	add	$a1, $v0, 2		# a1 = row_listing.data&
+	move	$s6, $v0		# s6 row_listing = valid_row_storage(i)
 	
 	# check board (rows)
+	lh	$a0, 0($s6)		# a0 = row_listing.count
+	addi	$a1, $s6, 2		# a1* = row_listing.data&
 	mul	$t0, $s4, 2
 	add	$t1, $s1, $t0
 	lh	$a2, 0($t1)		# a2 = board[i]
@@ -727,6 +829,8 @@ issol_loop:
 	
 	
 	# Check board transpose (columns)
+	lh	$a0, 0($s6)		# a0 = row_listing.count
+	addi	$a1, $s6, 2		# a1* = row_listing.data&
 	mul	$t0, $s4, 2
 	add	$t1, $s2, $t0
 	lh	$a2, 0($t1)		# a2 = transpose[i]
@@ -745,6 +849,7 @@ issol_loop_end:
 issol_yes:
 	li	$v0, 1		# all rows and cols were found valid
 issol_done:
+	lw	$s6, 28($sp)
 	lw	$s5, 24($sp)
 	lw	$s4, 20($sp)
 	lw	$s3, 16($sp)
@@ -752,7 +857,7 @@ issol_done:
 	lw	$s1, 8($sp)
 	lw	$s0, 4($sp)
 	lw	$ra, 0($sp)
-	addi	$sp, $sp, 28
+	addi	$sp, $sp, 32
 	jr	$ra
 
 #############################
@@ -800,7 +905,9 @@ bin_search_nomatch:
 	li	$t4, 2
 	div	$s0, $t4
 	mfhi	$t4
-	add	$a0, $a0, $t4
+	add	$a0, $a0, $t4	# getting here with no space left = not found
+	
+	beq	$a0, $zero, bin_search_notfound	
 	j	bin_search_recurse
 bin_search_less:
 	li	$s4, 0		# dropping no indeces if less than
