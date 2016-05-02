@@ -32,10 +32,10 @@ testb3:
 testb4:
 	.half 0x01a
 	.half 0x034
-	.half 0
-	.half 0
-	.half 0
-	.half 0
+	.half 0x019
+	.half 0x00b
+	.half 0x02a
+	.half 0x013
 	
 # Error messages
 err_badsize:
@@ -239,21 +239,36 @@ padb_end:
 	# jal	print_str
 	
 	# testing write_row, print_board, print_board_t
-	jal	print_board
-	la	$a0, newline
-	jal	print_str
-	li	$a0, 0
-	li	$a1, 0x1
-	jal	write_row
-	jal	print_board
-	la	$a0, newline
-	jal	print_str
-	jal	print_board_t
-	la	$a0, newline
-	jal	print_str
+	# jal	print_board
+	# la	$a0, newline
+	# jal	print_str
+	# li	$a0, 0
+	# li	$a1, 0x1
+	# jal	write_row
+	# jal	print_board
+	# la	$a0, newline
+	# jal	print_str
+	# jal	print_board_t
+	# la	$a0, newline
+	# jal	print_str
 	
-	la	$a0, finalpzl
-	jal	print_str
+	# testing write_board
+	# jal	print_board
+	# la	$a0, newline
+	# jal	print_str
+	# jal	print_board_t
+	# la	$a0, newline
+	# jal	print_str
+	# la	$a0, testb4
+	# jal	write_board
+	# jal	print_board
+	# la	$a0, newline
+	# jal	print_str
+	# jal	print_board_t
+	# la	$a0, newline
+	# jal	print_str
+	# la	$a0, finalpzl
+	# jal	print_str
 	
 	move	$a0, $s0
 	move	$a1, $s1

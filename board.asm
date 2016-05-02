@@ -21,6 +21,7 @@ hflags:
 	.half 0x0010, 0x0020, 0x0040, 0x0080
 	.half 0x0100, 0x0200
 
+board_state:
 bsize:
 	.space 4
 	
@@ -275,12 +276,47 @@ print_board_t:
 # write_board
 # Write a full board to the board slot in memory.
 # This operation also computes and stores the transpose of the new board.
+# (As a consequence of calling write_row)
 # Args:
 #  a0 - Pointer to a board of the appropriate size.
 # Returns:
 #  v0 - 0 if failure, 1 if success.
+# WARNING: Board is not rolled back on failure.
 #############################
 write_board:
+	addi	$sp, $sp, -16
+	sw	$s2, 12($sp)
+	sw	$s1, 8($sp)
+	sw	$s0, 4($sp)
+	sw	$ra, 0($sp)
+	
+	la	$t0, bsize
+	la	$s0, 0($t0)	# s0 = len
+	move	$s1, $a0	# s1 = newboard*
+	
+	li	$s2, 0		# s2 as i = 0
+wb_loop:
+	slt	$t0, $s2, $s0
+	beq	$t0, $zero, wb_done
+	
+	mul	$t0, $s2, 2
+	add	$t0, $s1, $t0
+	
+	# write_row(i, newboard[i])
+	move	$a0, $s2		# i
+	lh	$a1, 0($t0)		# newboard[i]
+	jal	write_row
+	
+	beq	$v0, $zero, wb_done	#  stop on failure
+	
+	addi	$s2, $s2, 1
+	j	wb_loop
+wb_done:
+	lw	$s2, 12($sp)
+	lw	$s1, 8($sp)
+	lw	$s0, 4($sp)
+	lw	$ra, 0($sp)
+	addi	$sp, $sp, 16
 	jr	$ra
 	
 #############################
