@@ -74,6 +74,7 @@ bbuf:
 	.globl print_template_row
 	.globl print_board_hedge
 	.globl print_template
+	.globl print_bstate
 	.globl print_bstate_row
 	
 	# board.asm
@@ -168,17 +169,22 @@ padb_end:
 	jal	b_from_template
 	beq	$v0, $zero, bad_puzzle
 	
-	# testing is_solution
-	move	$a0, $s0
-	la	$a1, testb3
-	move	$a2, $a1	# can't handle transpose yet
-	jal	is_solution
+	# # testing is_solution
+	# move	$a0, $s0
+	# la	$a1, testb3
+	# move	$a2, $a1	# can't handle transpose yet
+	# jal	is_solution
+	# move	$a0, $v0
+	# jal	print_int
+	# la	$a0, newline
+	# jal	print_str
 	
-	move	$a0, $v0
-	jal	print_int
-	
-	la	$a0, newline
-	jal	print_str
+	# testing print_bstate
+	# move	$a0, $s0
+	# la	$a1, testb2
+	# jal	print_bstate
+	# la	$a0, newline
+	# jal	print_str
 	
 	la	$a0, finalpzl
 	jal	print_str

@@ -62,6 +62,7 @@ newline:
 	.globl print_template_row
 	.globl print_board_hedge
 	.globl print_template
+	.globl print_bstate
 	.globl print_bstate_row
 	
 #############################
@@ -214,12 +215,69 @@ pt_done:
 	jr	$ra
 	
 #############################
+# print_bstate
+# Print the (non-template) board state.
+# Args:
+#  a0 - Length of a board side
+#  a1 - Pointer series to halfwords representing rows.
+#############################	
+print_bstate:
+	addi	$sp, $sp, -16
+	sw	$s2, 12($sp)
+	sw	$s1, 8($sp)
+	sw	$s0, 4($sp)
+	sw	$ra, 0($sp)
+	
+	move	$s0, $a0	# s0 = len
+	move	$s1, $a1	# s1 = board*
+	
+	jal	print_board_hedge
+	la	$a0, newline
+	jal	print_str
+	
+	li	$s2, 0		# s2 as i = 0
+	
+pbs_loop:
+	slt	$t0, $s2, $s0
+	beq	$t0, $zero, pbs_done
+	
+	la	$a0, side
+	jal	print_str
+	
+	move	$a0, $s0
+	
+	mul	$t1, $s2, 2
+	add	$t2, $s1, $t1
+	lh	$a1, 0($t2)
+	move	$a0, $s0
+	jal	print_bstate_row
+	
+	la	$a0, side
+	jal	print_str
+	
+	la	$a0, newline
+	jal	print_str
+	
+	addi	$s2, $s2, 1
+	j	pbs_loop
+pbs_done:
+	move	$a0, $s0
+	jal 	print_board_hedge
+	
+	sw	$s2, 12($sp)
+	lw	$s1, 8($sp)
+	lw	$s0, 4($sp)
+	lw	$ra, 0($sp)
+	addi	$sp, $sp, 16
+	jr	$ra
+
+#############################
 # print_bstate_row
 # Print a row from a "real" (non-template) board.
 # Args:
 #  a0 - Length of a board row
 #  a1 - Integer (halfword) representation of valid final board row (no unknowns)
-#  	This should be generated from validrows.asm.
+#  	Row data should be generated from validrows.asm.
 # 	As a binary number, 0 is white, 1 is black.
 #############################
 print_bstate_row:
