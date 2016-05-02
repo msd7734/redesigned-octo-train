@@ -93,6 +93,10 @@ bbuf:
 	.globl bit_from_coord
 	.globl set_bit
 	.globl b_transpose
+	.globl write_board
+	.globl write_row
+	.globl print_board
+	.globl print_board_t
 	
 	# External definitions
 	# ====================
@@ -191,11 +195,11 @@ padb_end:
 	# jal	print_str
 	
 	# testing print_bstate
-	move	$a0, $s0
-	la	$a1, testb4
-	jal	print_bstate
-	la	$a0, newline
-	jal	print_str
+	# move	$a0, $s0
+	# la	$a1, testb4
+	# jal	print_bstate
+	# la	$a0, newline
+	# jal	print_str
 	
 	# testing bit_from_coord
 	# jal	read_int
@@ -233,6 +237,20 @@ padb_end:
 	# jal	print_bstate
 	# la	$a0, newline
 	# jal	print_str
+	
+	# testing write_row, print_board, print_board_t
+	jal	print_board
+	la	$a0, newline
+	jal	print_str
+	li	$a0, 0
+	li	$a1, 0x1
+	jal	write_row
+	jal	print_board
+	la	$a0, newline
+	jal	print_str
+	jal	print_board_t
+	la	$a0, newline
+	jal	print_str
 	
 	la	$a0, finalpzl
 	jal	print_str

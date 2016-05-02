@@ -116,6 +116,7 @@ filtered_rows:
 	.globl print_int
 	.globl print_str
 	.globl read_int
+	.globl print_bstate
 	
 	# External definitions
 	# ====================
@@ -127,6 +128,8 @@ filtered_rows:
 	.globl bit_from_coord
 	.globl set_bit
 	.globl b_transpose
+	.globl print_board
+	.globl print_board_t
 
 	
 #############################
@@ -234,6 +237,92 @@ bft_done:
 	jr	$ra
 
 #############################
+# print_board
+# Print the stored board state.
+#############################
+print_board:
+	addi	$sp, $sp, -4
+	sw	$ra, 0($sp)
+	
+	la	$a0, bsize
+	lw	$a0, 0($a0)
+	la	$a1, board
+	jal	print_bstate
+	
+	lw	$ra, 0($sp)
+	addi	$sp, $sp, 4
+	jr	$ra
+	
+#############################
+# print_board_t
+# Print the transpose of the stored board state.
+#############################
+print_board_t:
+	addi	$sp, $sp, -4
+	sw	$ra, 0($sp)
+	
+	la	$a0, bsize
+	lw	$a0, 0($a0)
+	la	$a1, board_t
+	jal	print_bstate
+	
+	lw	$ra, 0($sp)
+	addi	$sp, $sp, 4
+	jr	$ra
+
+	
+#############################
+# write_board
+# Write a full board to the board slot in memory.
+# This operation also computes and stores the transpose of the new board.
+# Args:
+#  a0 - Pointer to a board of the appropriate size.
+# Returns:
+#  v0 - 0 if failure, 1 if success.
+#############################
+write_board:
+	jr	$ra
+	
+#############################
+# write_row
+# Write a row to the board slot in memory.
+# This operation also computes and stores the transpose of the new board.
+# Args:
+#  a0 - The row index to write.
+#  a1 - 16-bit integer representing a board row.
+# Returns:
+#  v0 - 0 if failure, 1 if success.
+#############################
+write_row:
+	addi	$sp, $sp, -4
+	sw	$ra, 0($sp)
+	
+	# ensure row is valid
+	la	$t0, bsize
+	lw	$t0, 0($t0)
+	slt	$t1, $a0, $t0
+	beq	$t1, $zero, wr_badrow
+	
+	# write value
+	la	$t0, board
+	mul	$t1, $a0, 2
+	add	$t0, $t0, $t1
+	sh	$a1, 0($t0)
+	
+	# compute new transpose
+	jal	b_transpose
+	
+	# store success
+	li	$v0, 1
+	j	wr_done
+wr_badrow:
+	li	$v0, 0
+wr_done:
+	lw	$ra, 0($sp)
+	addi	$sp, $sp, 4
+	jr	$ra
+	
+#############################
 # bit_from_coord
 # Get the bit from row i, col j off the given board state.
 # Bits are laid out like this:
@@ -337,9 +426,10 @@ b_transpose:
 	sw	$s0, 4($sp)
 	sw	$ra, 0($sp)
 	
-	# secretly take in and use a0 for testing purposes
-	# move	$s1, $a0
+	
 	la	$s1, board	# s1 = board
+	# uncomment to secretly take in and use a0 instead for testing
+	# move	$s1, $a0
 	la	$s2, board_t	# s2 = transpose
 	
 	la	$t0, bsize
