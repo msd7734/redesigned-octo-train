@@ -58,8 +58,6 @@ finalpzl:
 	.align 2
 	
 # Input buffer
-bsize:
-	.space 4
 bbuf:
 	.space BBUF_SIZE
 	
@@ -120,8 +118,8 @@ main:
 	jal	read_int		# read board size
 	move	$s0, $v0		# s0 = board size
 	
-	slti	$t0, $v0, 11		# check valid size: 2 <= x <= 10
-	slti	$t1, $v0, 2
+	slti	$t0, $v0, MAX_BSIZE+1	# check valid size: 2 <= x <= 10
+	slti	$t1, $v0, MIN_BSIZE
 	nor	$t1, $t1, $zero
 	and	$t2, $t0, $t1		# 1 if in valid range
 	li	$t3, 1			# ensure size is even too
